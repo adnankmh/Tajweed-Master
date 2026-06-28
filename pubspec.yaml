@@ -1,0 +1,28 @@
+name: tajweed_master_pro
+description: A premium Flutter app for learning Quran recitation rules and Tajweed with Uthmani Quran text, colored rule spans, lessons, exams, reminders, and multilingual UI.
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.8.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  shared_preferences: ^2.3.3
+  intl: ^0.20.2
+  flutter_local_notifications: ^22.0.1
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/data/quran_uthmani.json
+    - assets/icons/icon-192.png
+    - assets/icons/icon-512.png
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
