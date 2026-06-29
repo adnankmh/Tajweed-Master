@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 import 'dart:convert';
 import 'package:flutter/gestures.dart';
@@ -94,6 +95,36 @@ class HomeShell extends StatefulWidget {
 }
 
 
+
+class PlaybackController extends ChangeNotifier {
+  int? activeSurah;
+  int? currentAyah;
+  int startAyah = 1;
+  bool isPlaying = false;
+
+  void start({required int surah, required int ayah}) {
+    activeSurah = surah;
+    startAyah = ayah;
+    currentAyah = ayah;
+    isPlaying = true;
+    notifyListeners();
+  }
+
+  void setAyah(int surah, int ayah, {bool playing = true}) {
+    activeSurah = surah;
+    currentAyah = ayah;
+    isPlaying = playing;
+    notifyListeners();
+  }
+
+  void stop() {
+    isPlaying = false;
+    notifyListeners();
+  }
+}
+
+final PlaybackController playbackController = PlaybackController();
+
 class _HomeShellState extends State<HomeShell> {
   int page = 0;
   bool navVisible = true;
@@ -187,7 +218,7 @@ class _HomeShellState extends State<HomeShell> {
           final content = Column(
             children: [
               SettingsBar(settings: widget.settings, onOpenSettings: () => goPage(6)),
-              Expanded(child: children[page]),
+              Expanded(child: IndexedStack(index: page, children: children)),
             ],
           );
           if (!isWide) return content;
@@ -570,6 +601,23 @@ class _QuranScreenState extends State<QuranScreen> {
       padding: const EdgeInsets.all(16),
       children: [
         ScientificWarning(lang: lang),
+        AnimatedBuilder(
+          animation: playbackController,
+          builder: (context, _) {
+            if (!playbackController.isPlaying || playbackController.activeSurah == null || playbackController.currentAyah == null) return const SizedBox.shrink();
+            return Card(
+              color: Theme.of(context).colorScheme.primaryContainer.withOpacity(.45),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                child: Row(children: [
+                  Icon(Icons.auto_awesome_rounded, color: Theme.of(context).colorScheme.primary),
+                  const SizedBox(width: 10),
+                  Expanded(child: Text(lang == 'ar' ? 'نور التلاوة يعمل الآن: سورة ${playbackController.activeSurah}، آية ${playbackController.currentAyah}. افتح نفس السورة أو الصفحة لرؤية النور يتحرك مع الآيات.' : 'Recitation glow is active: Surah ${playbackController.activeSurah}, Ayah ${playbackController.currentAyah}. Open the same surah or page to see the glow follow the recitation.', style: const TextStyle(fontWeight: FontWeight.w900, height: 1.4))),
+                ]),
+              ),
+            );
+          },
+        ),
         Card(
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -672,7 +720,13 @@ class _QuranScreenState extends State<QuranScreen> {
           const SizedBox(height: 16),
           for (var i = 0; i < refs.length; i++) ...[
             if (i == 0 || refs[i].surah != refs[i - 1].surah) _surahHeader(refs[i]),
-            AyahView(ref: refs[i], settings: widget.settings),
+            AnimatedBuilder(
+              animation: playbackController,
+              builder: (context, _) {
+                final active = playbackController.isPlaying && playbackController.activeSurah == refs[i].surah && playbackController.currentAyah == refs[i].ayah.number;
+                return AyahView(ref: refs[i], settings: widget.settings, isPlayingAyah: active);
+              },
+            ),
           ],
         ]),
       ),
@@ -701,9 +755,10 @@ class _QuranScreenState extends State<QuranScreen> {
 }
 
 class AyahView extends StatelessWidget {
-  const AyahView({super.key, required this.ref, required this.settings});
+  const AyahView({super.key, required this.ref, required this.settings, required this.isPlayingAyah});
   final QuranRef ref;
   final SettingsController settings;
+  final bool isPlayingAyah;
 
   @override
   Widget build(BuildContext context) {
@@ -719,8 +774,19 @@ class AyahView extends StatelessWidget {
       letterSpacing: 0,
     );
     return LayoutBuilder(builder: (context, constraints) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8),
+      return AnimatedContainer(
+        duration: const Duration(milliseconds: 360),
+        curve: Curves.easeOutCubic,
+        margin: const EdgeInsets.symmetric(vertical: 5),
+        padding: const EdgeInsets.symmetric(vertical: 7, horizontal: 8),
+        decoration: BoxDecoration(
+          color: isPlayingAyah ? Theme.of(context).colorScheme.primaryContainer.withOpacity(.28) : Colors.transparent,
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: isPlayingAyah
+              ? [BoxShadow(color: Theme.of(context).colorScheme.primary.withOpacity(.22), blurRadius: 22, spreadRadius: 2)]
+              : const [],
+          border: isPlayingAyah ? Border.all(color: Theme.of(context).colorScheme.primary.withOpacity(.55), width: 1.4) : null,
+        ),
         child: Directionality(
           textDirection: TextDirection.rtl,
           child: GestureDetector(
@@ -775,12 +841,12 @@ class TajweedOverlayPainter extends CustomPainter {
       for (final box in boxes) {
         final r = box.toRect();
         if (r.width <= 1 || r.height <= 1) continue;
-        clipPath.addRRect(RRect.fromRectAndRadius(r.inflate(1.2), const Radius.circular(4)));
+        clipPath.addRRect(RRect.fromRectAndRadius(r.inflate(.35), const Radius.circular(3)));
       }
       canvas.save();
       canvas.clipPath(clipPath);
       final coloredPainter = TextPainter(
-        text: TextSpan(text: text, style: style.copyWith(color: segment.rule.color, fontWeight: FontWeight.w900)),
+        text: TextSpan(text: text, style: style.copyWith(color: segment.rule.color)),
         textDirection: textDirection,
         textAlign: textAlign,
         maxLines: null,
@@ -866,6 +932,8 @@ class AudioScreen extends StatefulWidget {
 
 class _AudioScreenState extends State<AudioScreen> {
   final AudioPlayer player = AudioPlayer();
+  StreamSubscription<int?>? _indexSubscription;
+  StreamSubscription<bool>? _playingSubscription;
   int reciterIndex = 0;
   int selectedSurah = 1;
   int selectedAyah = 1;
@@ -873,7 +941,25 @@ class _AudioScreenState extends State<AudioScreen> {
   String status = '';
 
   @override
+  void initState() {
+    super.initState();
+    _indexSubscription = player.currentIndexStream.listen((index) {
+      final surahNumber = playbackController.activeSurah;
+      if (surahNumber == null || index == null) return;
+      playbackController.setAyah(surahNumber, playbackController.startAyah + index, playing: player.playing);
+    });
+    _playingSubscription = player.playingStream.listen((playing) {
+      final surahNumber = playbackController.activeSurah;
+      final ayahNumber = playbackController.currentAyah;
+      if (surahNumber == null || ayahNumber == null) return;
+      playbackController.setAyah(surahNumber, ayahNumber, playing: playing);
+    });
+  }
+
+  @override
   void dispose() {
+    _indexSubscription?.cancel();
+    _playingSubscription?.cancel();
     player.dispose();
     super.dispose();
   }
@@ -882,25 +968,26 @@ class _AudioScreenState extends State<AudioScreen> {
   ReciterSource get reciter => reciters[reciterIndex];
 
   Future<void> _playSingle() async {
-    await _safePlay([reciter.urlFor(selectedSurah, selectedAyah)]);
+    await _safePlay([reciter.urlFor(selectedSurah, selectedAyah)], selectedSurah, selectedAyah);
   }
 
   Future<void> _playSurah() async {
     final urls = surah.ayahs.map((a) => reciter.urlFor(selectedSurah, a.number)).toList(growable: false);
-    await _safePlay(urls);
+    await _safePlay(urls, selectedSurah, 1);
   }
 
-  Future<void> _safePlay(List<String> urls) async {
+  Future<void> _safePlay(List<String> urls, int surahNumber, int firstAyah) async {
     setState(() { loading = true; status = ''; });
     try {
       await player.stop();
+      playbackController.start(surah: surahNumber, ayah: firstAyah);
       if (urls.length == 1) {
         await player.setUrl(urls.first);
       } else {
-        await player.setAudioSources(   [for (final url in urls) AudioSource.uri(Uri.parse(url))], );
+        await player.setAudioSources([for (final url in urls) AudioSource.uri(Uri.parse(url))]);
       }
       await player.play();
-      setState(() => status = widget.settings.language == 'ar' ? 'جاري التشغيل...' : 'Playing...');
+      setState(() => status = widget.settings.language == 'ar' ? 'جاري التشغيل... سيستمر الصوت حتى لو انتقلت إلى صفحة أخرى، وسيظهر نور التتبع على الآية الجارية داخل المصحف.' : 'Playing... Audio continues when you leave this page, and the recitation glow follows the current ayah in the Mushaf.');
     } catch (e) {
       setState(() => status = widget.settings.language == 'ar' ? 'تعذر تشغيل الصوت. تأكد من الاتصال بالإنترنت أو جرّب قارئًا آخر.' : 'Audio could not be played. Check internet connection or try another reciter.');
     } finally {
@@ -942,7 +1029,7 @@ class _AudioScreenState extends State<AudioScreen> {
         Wrap(spacing: 10, runSpacing: 10, children: [
           FilledButton.icon(onPressed: loading ? null : _playSingle, icon: const Icon(Icons.play_arrow_rounded), label: Text(t('playAyah', lang))),
           FilledButton.icon(onPressed: loading ? null : _playSurah, icon: const Icon(Icons.play_circle_fill_rounded), label: Text(t('playSurah', lang))),
-          OutlinedButton.icon(onPressed: () async { await player.stop(); setState(() => status = lang == 'ar' ? 'تم الإيقاف' : 'Stopped'); }, icon: const Icon(Icons.stop_rounded), label: Text(t('stop', lang))),
+          OutlinedButton.icon(onPressed: () async { await player.stop(); playbackController.stop(); setState(() => status = lang == 'ar' ? 'تم الإيقاف' : 'Stopped'); }, icon: const Icon(Icons.stop_rounded), label: Text(t('stop', lang))),
         ]),
         const SizedBox(height: 12),
         if (loading) const LinearProgressIndicator(),

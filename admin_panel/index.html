@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>لوحة إدارة تجويد ماستر برو</title>
+  <style>
+    :root{--bg:#f6f2e8;--card:#fffdf8;--ink:#17231f;--muted:#66736e;--primary:#08766c;--gold:#b08d32;--line:#e6deca;--danger:#b91c1c}
+    *{box-sizing:border-box} body{margin:0;font-family:Arial,Tahoma,sans-serif;background:linear-gradient(135deg,#f7f2e2,#e8f6f3);color:var(--ink)}
+    header{position:sticky;top:0;z-index:2;background:rgba(255,253,248,.92);backdrop-filter:blur(14px);border-bottom:1px solid var(--line);padding:14px 24px;display:flex;gap:16px;align-items:center;justify-content:space-between}
+    h1{font-size:22px;margin:0}.badge{background:#e2f4ef;color:#075a52;padding:7px 12px;border-radius:999px;font-weight:800}.wrap{display:grid;grid-template-columns:270px 1fr;gap:20px;padding:20px;max-width:1500px;margin:auto}
+    nav{background:var(--card);border:1px solid var(--line);border-radius:24px;padding:14px;box-shadow:0 16px 50px #0001;height:max-content;position:sticky;top:84px}button{border:0;border-radius:16px;padding:12px 14px;font-weight:800;cursor:pointer;background:#ecf4f1;color:#0e4f49}nav button{display:block;width:100%;margin:8px 0;text-align:right}nav button.active{background:var(--primary);color:white}.grid{display:grid;grid-template-columns:repeat(4,minmax(150px,1fr));gap:14px;margin-bottom:18px}.card{background:var(--card);border:1px solid var(--line);border-radius:24px;padding:18px;box-shadow:0 16px 50px #0000000d}.metric{font-size:30px;font-weight:900;color:var(--primary)}.muted{color:var(--muted)}textarea,input,select{width:100%;border:1px solid var(--line);border-radius:14px;padding:12px;background:white;font:inherit;margin:7px 0}label{font-weight:900}.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}.actions{display:flex;gap:10px;flex-wrap:wrap}.primary{background:var(--primary);color:white}.gold{background:var(--gold);color:white}.danger{background:#fee2e2;color:var(--danger)}table{width:100%;border-collapse:collapse;background:white;border-radius:18px;overflow:hidden}td,th{border-bottom:1px solid var(--line);padding:12px;text-align:right}th{background:#f2ead6}.login{max-width:460px;margin:70px auto}.hidden{display:none}@media(max-width:900px){.wrap{grid-template-columns:1fr}.grid{grid-template-columns:1fr 1fr}nav{position:static}.row{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+<header><div><h1>لوحة إدارة تجويد ماستر برو</h1><div class="muted">admin.tajweedmaster.com — نسخة إدارة V13</div></div><span class="badge">Firebase Ready</span></header>
+<section id="login" class="login card">
+  <h2>تسجيل دخول المدير</h2>
+  <label>اسم المستخدم</label><input id="user" value="Adnan" />
+  <label>كلمة المرور</label><input id="pass" type="password" value="Adnan123" />
+  <button class="primary" onclick="login()">دخول لوحة الإدارة</button>
+  <p class="muted">هذه نسخة إدارة مستقلة قابلة للربط مع Firebase Auth وFirestore. بيانات الدخول المحلية للتجربة فقط.</p>
+</section>
+<div id="app" class="wrap hidden">
+  <nav id="nav"></nav>
+  <main>
+    <section class="grid">
+      <div class="card"><div class="metric" id="mUsers">0</div><div class="muted">مستخدمون</div></div>
+      <div class="card"><div class="metric" id="mQuestions">0</div><div class="muted">أسئلة</div></div>
+      <div class="card"><div class="metric" id="mLessons">0</div><div class="muted">دروس</div></div>
+      <div class="card"><div class="metric" id="mCerts">0</div><div class="muted">شهادات</div></div>
+    </section>
+    <section id="content" class="card"></section>
+  </main>
+</div>
+<script>
+const tabs=[['dashboard','الإحصائيات'],['users','إدارة المستخدمين'],['questions','إدارة الأسئلة'],['lessons','إدارة الدروس'],['exams','إدارة الامتحانات'],['reciters','إدارة القراء'],['notifications','إدارة الإشعارات'],['news','إدارة الأخبار'],['certificates','الشهادات'],['ai','تحليل التلاوة AI'],['export','استيراد/تصدير']];
+const storeKey='tajweed_admin_v13';
+let state=JSON.parse(localStorage.getItem(storeKey)||'{"users":[],"questions":[],"lessons":[],"exams":[],"reciters":[],"news":[],"certificates":[]}');
+function save(){localStorage.setItem(storeKey,JSON.stringify(state));metrics()}
+function login(){if(user.value==='Adnan'&&pass.value==='Adnan123'){login.classList?.add('hidden');document.getElementById('login').classList.add('hidden');document.getElementById('app').classList.remove('hidden');init()}else alert('بيانات الدخول غير صحيحة')}
+function init(){document.getElementById('nav').innerHTML=tabs.map((t,i)=>`<button onclick="render('${t[0]}')" id="b_${t[0]}" class="${i?'':'active'}">${t[1]}</button>`).join('');seed();metrics();render('dashboard')}
+function active(k){tabs.forEach(t=>document.getElementById('b_'+t[0])?.classList.remove('active'));document.getElementById('b_'+k)?.classList.add('active')}
+function seed(){ if(!state.questions.length){state.questions.push({prompt:'ما مخرج الغنة؟',answer:'الخيشوم',level:1,explanation:'الغنة صوت يخرج من الخيشوم.'}); state.lessons.push({title:'الغنة',body:'شرح موسع عن الغنة ومقدارها وأمثلتها.'}); state.reciters.push({name:'محمد صديق المنشاوي - المصحف المعلم',url:'ضع رابط السور'}); save();}}
+function metrics(){mUsers.textContent=state.users.length;mQuestions.textContent=state.questions.length;mLessons.textContent=state.lessons.length;mCerts.textContent=state.certificates.length}
+function render(k){active(k); const c=document.getElementById('content');
+ if(k==='dashboard') c.innerHTML='<h2>لوحة الإحصائيات</h2><p>تظهر هنا مؤشرات الاستخدام: الصفحات المقروءة، الأيام المتتالية، أفضل النتائج، ونشاط المستخدمين. عند ربط Firestore ستقرأ هذه البيانات مباشرة من السحابة.</p>'+table(['المؤشر','القيمة'],[['المستخدمون',state.users.length],['الأسئلة',state.questions.length],['الدروس',state.lessons.length],['القراء',state.reciters.length]]);
+ if(k==='questions') editor('questions',['prompt','answer','level','explanation'],'إدارة الأسئلة');
+ if(k==='lessons') editor('lessons',['title','body'],'إدارة الدروس والشروحات');
+ if(k==='exams') editor('exams',['title','description','level'],'إدارة الامتحانات');
+ if(k==='reciters') editor('reciters',['name','url','style'],'إدارة القراء والتلاوات');
+ if(k==='news') editor('news',['title','body','locale'],'إدارة الأخبار والتنبيهات');
+ if(k==='users') c.innerHTML='<h2>إدارة المستخدمين</h2><p>بعد ربط Firebase Auth ستظهر الحسابات والتقدم والنقاط والشهادات.</p>'+table(['UID','الاسم','النقاط'],state.users.map(u=>[u.uid,u.name,u.points]));
+ if(k==='notifications') c.innerHTML='<h2>إدارة الإشعارات</h2><textarea id="noti" placeholder="اكتب إشعارًا للمتعلمين"></textarea><button class="primary" onclick="alert(\'سيتم ربط الإرسال عبر FCM لاحقًا\')">إرسال إشعار</button>';
+ if(k==='certificates') c.innerHTML='<h2>الشهادات</h2><p>إصدار شهادات PDF مع رقم تحقق وQR. Cloud Function جاهزة في cloud_functions.</p>'+table(['رقم','المستخدم','المرحلة'],state.certificates.map(x=>[x.id,x.user,x.stage]));
+ if(k==='ai') c.innerHTML='<h2>تحليل التلاوة بالذكاء الاصطناعي</h2><p>يرفع المستخدم تسجيلًا، ثم يرجع الخادم أماكن الخطأ: إخفاء، مد، غنة، قلقلة. تم تجهيز نموذج Cloud Function Placeholder.</p><input type=file accept="audio/*"><button class="gold">تحليل تجريبي</button>';
+ if(k==='export') c.innerHTML='<h2>استيراد/تصدير</h2><p>صدّر البيانات الحالية JSON ثم ارفعها إلى Firestore عبر السكربتات.</p><button class="primary" onclick="download()">تصدير JSON</button><textarea id="imp" placeholder="الصق JSON للاستيراد"></textarea><button onclick="importData()">استيراد</button>';
+}
+function editor(collection, fields, title){const c=document.getElementById('content');c.innerHTML=`<h2>${title}</h2><div class=row>${fields.map(f=>`<label>${f}<input id="${f}"></label>`).join('')}</div><div class=actions><button class=primary onclick="addItem('${collection}',${JSON.stringify(fields).replaceAll('"','&quot;')})">إضافة</button><button class=gold onclick="download()">تصدير</button></div><br>`+table([...fields,'إجراءات'],state[collection].map((x,i)=>[...fields.map(f=>x[f]||''),`<button class=danger onclick="del('${collection}',${i})">حذف</button>`]));}
+function addItem(col, fields){const item={};fields.forEach(f=>item[f]=document.getElementById(f).value);state[col].push(item);save();render(col)}
+function del(col,i){state[col].splice(i,1);save();render(col)}
+function table(headers, rows){return `<table><thead><tr>${headers.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map(x=>`<td>${x}</td>`).join('')}</tr>`).join('')}</tbody></table>`}
+function download(){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(state,null,2)],{type:'application/json'}));a.download='tajweed-admin-export.json';a.click()}
+function importData(){try{state=JSON.parse(imp.value);save();render('dashboard')}catch(e){alert('JSON غير صحيح')}}
+</script>
+</body>
+</html>

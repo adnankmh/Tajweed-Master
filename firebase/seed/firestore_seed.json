@@ -1,0 +1,28 @@
+{
+  "public_config/app": {
+    "version": "1.3.0",
+    "notice_ar": "مرحبًا بك في تجويد ماستر برو V13 Enterprise Foundation",
+    "scientificReviewRequired": true
+  },
+  "lessons/foundation_ghunnah": {
+    "locale": "ar",
+    "order": 1,
+    "title": "الغنة: تعريفها ومقدارها وأخطاء الأداء",
+    "body": "الغنة صوت يخرج من الخيشوم، لا عمل للسان فيه، ومقدارها المشهور في التعليم حركتان. يتدرّب الطالب عليها بالسماع والتكرار مع معلم متقن.",
+    "updatedAt": "serverTimestamp"
+  },
+  "questions/q_ghunnah_001": {
+    "examId": "foundation",
+    "level": 1,
+    "prompt": "ما مخرج الغنة؟",
+    "options": ["الخيشوم", "الحلق", "الشفتان", "طرف اللسان"],
+    "answerIndex": 0,
+    "explanation": "الغنة تخرج من الخيشوم، وتظهر في النون والميم المشددتين وبعض أحكام النون والميم الساكنتين."
+  },
+  "reciters/minshawi_moallim": {
+    "name_ar": "محمد صديق المنشاوي - المصحف المعلم",
+    "style": "moallim",
+    "baseUrl": "ضع رابط التخزين أو المصدر المعتمد هنا",
+    "enabled": true
+  }
+}

@@ -1,28 +1,25 @@
-# Release Checklist
+# Checklist V13 قبل Android/iOS
 
-## Flutter Web
-- [ ] `flutter analyze`
-- [ ] `flutter test`
-- [ ] `flutter build web --release --pwa-strategy offline-first`
-- [ ] تجربة الرابط على Chrome/Safari/Edge.
-- [ ] تجربة PWA install.
-- [ ] تجربة الإشعارات على HTTPS أو localhost.
+## تم
+- [x] هيكلة Enterprise
+- [x] Firebase schema/rules
+- [x] Admin portal مستقل
+- [x] Cloud Functions placeholders
+- [x] Certificates blueprint
+- [x] Gamification blueprint
+- [x] AI recitation pipeline
+- [x] Offline audio blueprint
+- [x] Search blueprint
+- [x] الحفاظ على build web بدون Firebase keys
 
-## Android
-- [ ] إنشاء package name نهائي.
-- [ ] إنشاء release keystore.
-- [ ] `flutter build appbundle --release`.
-- [ ] رفع AAB إلى Google Play Console.
-- [ ] Data Safety و Privacy Policy.
-
-## iOS
-- [ ] Bundle ID.
-- [ ] Xcode signing.
-- [ ] Apple privacy nutrition labels.
-- [ ] رفع عبر Transporter أو Xcode Organizer.
-
-## المحتوى الشرعي/العلمي
-- [ ] مراجعة النص القرآني.
-- [ ] مراجعة تلوين الأحكام.
-- [ ] مراجعة الشروحات.
-- [ ] مراجعة الأسئلة والامتحانات.
+## قبل النشر النهائي
+- [ ] إنشاء Firebase project
+- [ ] إضافة Firebase config عبر FlutterFire
+- [ ] تفعيل Auth providers
+- [ ] نشر Firestore/Storage rules
+- [ ] نشر Admin portal على subdomain
+- [ ] ربط app repository بـ Firestore
+- [ ] مراجعة علمية لكل أحكام التجويد
+- [ ] إضافة تنبيه دقة الذكاء الاصطناعي
+- [ ] اختبار Android release signing
+- [ ] تجهيز Privacy/Data Safety للمتاجر

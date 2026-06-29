@@ -1,0 +1,12 @@
+{
+  "collections": {
+    "lessons": {"fields": ["title", "body", "locale", "order", "updatedAt"]},
+    "rules": {"fields": ["name", "color", "summary", "details", "examples", "questions"]},
+    "questions": {"fields": ["examId", "prompt", "options", "answerIndex", "explanation", "level", "ruleId"]},
+    "exams": {"fields": ["title", "description", "level", "questionCount", "passScore"]},
+    "reciters": {"fields": ["name_ar", "name_en", "style", "baseUrl", "enabled"]},
+    "news": {"fields": ["title", "body", "locale", "publishedAt", "active"]},
+    "users": {"fields": ["displayName", "email", "photoUrl", "points", "level", "streakDays", "createdAt"]},
+    "leaderboards/global/entries": {"fields": ["userId", "displayName", "points", "level", "updatedAt"]}
+  }
+}

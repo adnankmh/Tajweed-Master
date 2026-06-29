@@ -1,0 +1,8 @@
+{
+  "indexes": [
+    {"collectionGroup": "questions", "queryScope": "COLLECTION", "fields": [{"fieldPath": "examId", "order": "ASCENDING"}, {"fieldPath": "level", "order": "ASCENDING"}]},
+    {"collectionGroup": "lessons", "queryScope": "COLLECTION", "fields": [{"fieldPath": "locale", "order": "ASCENDING"}, {"fieldPath": "order", "order": "ASCENDING"}]},
+    {"collectionGroup": "entries", "queryScope": "COLLECTION", "fields": [{"fieldPath": "points", "order": "DESCENDING"}, {"fieldPath": "updatedAt", "order": "DESCENDING"}]}
+  ],
+  "fieldOverrides": []
+}

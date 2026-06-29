@@ -1,7 +1,7 @@
 name: tajweed_master_pro
-description: A premium Flutter app for learning Quran recitation rules and Tajweed with Uthmani Quran text, colored rule spans, lessons, exams, reminders, and multilingual UI.
+description: Tajweed Master Pro V13 Enterprise Foundation - Flutter Quran Tajweed learning app with Firebase-ready architecture, admin portal blueprint, certificates, gamification, AI recitation pipeline, offline audio strategy, and cloud progress design.
 publish_to: 'none'
-version: 1.0.0+1
+version: 1.3.0+13
 
 environment:
   sdk: '>=3.8.0 <4.0.0'
