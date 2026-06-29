@@ -605,7 +605,10 @@ class TajweedOverlayPainter extends CustomPainter {
     for (final segment in segments) {
   final color = segment.rule.color;
   final boxes = painter.getBoxesForSelection(
-    TextSelection(baseOffset: segment.start, extentOffset: segment.end),
+    TextSelection(
+      baseOffset: segment.start,
+      extentOffset: segment.end,
+    ),
   );
 
   for (final box in boxes) {
@@ -614,8 +617,12 @@ class TajweedOverlayPainter extends CustomPainter {
     if (boxRect.width <= 1 || boxRect.height <= 1) continue;
 
     final markerHeight = (style.fontSize ?? 30) * .15;
+
     final top = (boxRect.top + (style.fontSize ?? 30) * .08)
-        .clamp(boxRect.top, boxRect.bottom - markerHeight)
+        .clamp(
+          boxRect.top,
+          boxRect.bottom - markerHeight,
+        )
         .toDouble();
 
     final rect = Rect.fromLTWH(
@@ -626,8 +633,12 @@ class TajweedOverlayPainter extends CustomPainter {
     );
 
     final paint = Paint()..color = color.withOpacity(.68);
+
     canvas.drawRRect(
-      RRect.fromRectAndRadius(rect, const Radius.circular(99)),
+      RRect.fromRectAndRadius(
+        rect,
+        const Radius.circular(99),
+      ),
       paint,
     );
   }
