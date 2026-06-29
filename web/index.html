@@ -16,6 +16,21 @@
   <title>Tajweed Master Pro</title>
 </head>
 <body>
+
+  <script>
+    let tajweedDeferredPrompt = null;
+    window.addEventListener('beforeinstallprompt', (event) => {
+      event.preventDefault();
+      tajweedDeferredPrompt = event;
+    });
+    window.tajweedPromptInstall = async function() {
+      if (!tajweedDeferredPrompt) return false;
+      tajweedDeferredPrompt.prompt();
+      const choice = await tajweedDeferredPrompt.userChoice;
+      tajweedDeferredPrompt = null;
+      return choice && choice.outcome === 'accepted';
+    };
+  </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

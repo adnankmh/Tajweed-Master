@@ -1,7 +1,11 @@
 import 'dart:math';
+import 'dart:convert';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:just_audio/just_audio.dart';
+import 'package:quran/quran.dart' as quran;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'data/app_strings.dart';
@@ -12,6 +16,7 @@ import 'services/notifications/notification_service.dart';
 import 'services/progress_service.dart';
 import 'services/quran_repository.dart';
 import 'services/settings_controller.dart';
+import 'services/pwa_install_service.dart';
 import 'services/tajweed_analyzer.dart';
 
 Future<void> main() async {
@@ -92,6 +97,7 @@ class HomeShell extends StatefulWidget {
 class _HomeShellState extends State<HomeShell> {
   int page = 0;
   bool navVisible = true;
+  bool adminLoggedIn = false;
 
   void goHome() => setState(() => page = 0);
   void goPage(int value) => setState(() => page = value);
@@ -101,34 +107,41 @@ class _HomeShellState extends State<HomeShell> {
     final lang = widget.settings.language;
     final labels = [
       t('quran', lang),
+      t('audio', lang),
       t('library', lang),
       t('lessons', lang),
       t('plan', lang),
       t('exams', lang),
       t('notifications', lang),
       t('settings', lang),
+      if (adminLoggedIn) t('admin', lang),
       t('publish', lang),
     ];
     final icons = [
       Icons.menu_book_rounded,
+      Icons.headphones_rounded,
       Icons.auto_stories_rounded,
       Icons.school_rounded,
       Icons.calendar_month_rounded,
       Icons.quiz_rounded,
       Icons.notifications_active_rounded,
       Icons.tune_rounded,
+      if (adminLoggedIn) Icons.admin_panel_settings_rounded,
       Icons.cloud_upload_rounded,
     ];
     final children = [
       QuranScreen(settings: widget.settings, surahs: widget.surahs),
+      AudioScreen(settings: widget.settings, surahs: widget.surahs),
       RulesLibraryScreen(settings: widget.settings),
       LessonsScreen(settings: widget.settings),
       LearningPlanScreen(settings: widget.settings),
       ExamsScreen(settings: widget.settings),
       NotificationsScreen(settings: widget.settings),
-      SettingsScreen(settings: widget.settings),
+      SettingsScreen(settings: widget.settings, adminLoggedIn: adminLoggedIn, onAdminLogin: () => setState(() => adminLoggedIn = true), onAdminLogout: () => setState(() { adminLoggedIn = false; page = 0; })),
+      if (adminLoggedIn) AdminScreen(settings: widget.settings),
       PublishScreen(settings: widget.settings),
     ];
+    if (page >= children.length) page = 0;
 
     return Scaffold(
       appBar: AppBar(
@@ -385,12 +398,17 @@ Future<void> _showChoiceSheet<T>(BuildContext context, {required String title, r
 }
 
 class SettingsScreen extends StatelessWidget {
-  const SettingsScreen({super.key, required this.settings});
+  const SettingsScreen({super.key, required this.settings, required this.adminLoggedIn, required this.onAdminLogin, required this.onAdminLogout});
   final SettingsController settings;
+  final bool adminLoggedIn;
+  final VoidCallback onAdminLogin;
+  final VoidCallback onAdminLogout;
 
   @override
   Widget build(BuildContext context) {
     final lang = settings.language;
+    final userController = TextEditingController();
+    final passController = TextEditingController();
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
@@ -408,11 +426,13 @@ class SettingsScreen extends StatelessWidget {
                 SectionTitle(t('theme', lang)),
                 Wrap(spacing: 8, runSpacing: 8, children: [for (final item in themeNames.entries) ChoiceChip(label: Text(item.value[lang] ?? item.value['ar']!), selected: settings.themeId == item.key, onSelected: (_) => settings.setThemeId(item.key))]),
                 SectionTitle(t('font', lang)),
-                Wrap(spacing: 8, runSpacing: 8, children: [for (final font in fontFamilies) ChoiceChip(label: Text(font), selected: settings.fontFamily == font, onSelected: (_) => settings.setFontFamily(font))]),
+                Text(lang == 'ar' ? 'اختيار الخط يطبق على المصحف والواجهة فورًا. في نسخة الويب يعتمد ظهور بعض الخطوط على توفرها في المتصفح أو الجهاز.' : 'Font changes apply instantly to the Mushaf and UI. On web, some fonts depend on browser/device availability.', style: const TextStyle(height: 1.5)),
+                const SizedBox(height: 8),
+                Wrap(spacing: 8, runSpacing: 8, children: [for (final font in fontFamilies) ChoiceChip(label: Text(font, style: TextStyle(fontFamily: font)), selected: settings.fontFamily == font, onSelected: (_) => settings.setFontFamily(font))]),
                 SectionTitle(t('fontSize', lang)),
                 Row(children: [
                   IconButton.filledTonal(onPressed: () => settings.changeFontSize(-2), icon: const Icon(Icons.text_decrease_rounded)),
-                  Expanded(child: Slider(value: settings.quranFontSize, min: 20, max: 48, divisions: 14, label: settings.quranFontSize.toStringAsFixed(0), onChanged: settings.setFontSize)),
+                  Expanded(child: Slider(value: settings.quranFontSize, min: 20, max: 56, divisions: 18, label: settings.quranFontSize.toStringAsFixed(0), onChanged: settings.setFontSize)),
                   IconButton.filledTonal(onPressed: () => settings.changeFontSize(2), icon: const Icon(Icons.text_increase_rounded)),
                 ]),
                 SwitchListTile(
@@ -426,9 +446,88 @@ class SettingsScreen extends StatelessWidget {
             ),
           ),
         ),
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Row(children: [Icon(Icons.install_mobile_rounded, color: Theme.of(context).colorScheme.primary), const SizedBox(width: 10), Text(t('installApp', lang), style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900))]),
+              const SizedBox(height: 8),
+              Text(lang == 'ar' ? 'يمكن تثبيت التطبيق كتطبيق على الهاتف أو الكمبيوتر من المتصفح. في Chrome/Edge اضغط زر التثبيت إن ظهر أو من قائمة المتصفح اختر Install app / Add to Home screen. في iPhone استخدم Safari ثم Share ثم Add to Home Screen.' : 'Install the web app from the browser. In Chrome/Edge use Install app or Add to Home screen. On iPhone use Safari > Share > Add to Home Screen.', style: const TextStyle(height: 1.6)),
+              const SizedBox(height: 12),
+              Wrap(spacing: 10, runSpacing: 10, children: [
+                FilledButton.icon(onPressed: () async {
+                  final ok = await PwaInstallService.promptInstall();
+                  if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(ok ? (lang == 'ar' ? 'تم فتح نافذة التثبيت.' : 'Install prompt opened.') : (lang == 'ar' ? 'إن لم تظهر نافذة التثبيت استخدم قائمة المتصفح: إضافة إلى الشاشة الرئيسية.' : 'If no prompt appears, use the browser menu: Add to home screen.'))));
+                }, icon: const Icon(Icons.download_for_offline_rounded), label: Text(t('installApp', lang))),
+                OutlinedButton.icon(onPressed: () => Clipboard.setData(ClipboardData(text: Uri.base.toString())), icon: const Icon(Icons.link_rounded), label: Text(lang == 'ar' ? 'نسخ رابط التطبيق' : 'Copy link')),
+              ]),
+            ]),
+          ),
+        ),
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Row(children: [Icon(Icons.admin_panel_settings_rounded, color: Theme.of(context).colorScheme.primary), const SizedBox(width: 10), Text(t('adminPanel', lang), style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900))]),
+              const SizedBox(height: 8),
+              Text(lang == 'ar' ? 'لوحة الإدارة تظهر في القائمة فقط بعد تسجيل دخول المدير. التعديلات هنا محلية على هذا الجهاز/المتصفح إلى أن يتم ربط التطبيق لاحقًا بقاعدة بيانات وسيرفر.' : 'The admin page appears only after admin login. Edits are local on this device/browser until a backend database is connected.', style: const TextStyle(height: 1.55)),
+              const SizedBox(height: 12),
+              if (adminLoggedIn)
+                FilledButton.icon(onPressed: onAdminLogout, icon: const Icon(Icons.logout_rounded), label: Text(lang == 'ar' ? 'تسجيل خروج المدير' : 'Admin logout'))
+              else ...[
+                TextField(controller: userController, decoration: InputDecoration(labelText: t('username', lang), prefixIcon: const Icon(Icons.person_rounded))),
+                const SizedBox(height: 10),
+                TextField(controller: passController, obscureText: true, decoration: InputDecoration(labelText: t('password', lang), prefixIcon: const Icon(Icons.lock_rounded))),
+                const SizedBox(height: 12),
+                FilledButton.icon(onPressed: () {
+                  final ok = userController.text.trim() == 'Adnan' && passController.text.trim() == 'Adnan123';
+                  if (ok) {
+                    onAdminLogin();
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(lang == 'ar' ? 'تم دخول المدير وظهرت صفحة الإدارة.' : 'Admin logged in.')));
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(lang == 'ar' ? 'بيانات الدخول غير صحيحة.' : 'Invalid admin credentials.')));
+                  }
+                }, icon: const Icon(Icons.login_rounded), label: Text(t('login', lang))),
+              ],
+            ]),
+          ),
+        ),
       ],
     );
   }
+}
+
+enum QuranBrowseMode { surah, juz, page, index }
+
+class QuranRef {
+  const QuranRef({required this.surah, required this.surahName, required this.englishName, required this.ayah, required this.globalIndex, required this.juz, required this.page});
+  final int surah;
+  final String surahName;
+  final String englishName;
+  final QuranAyah ayah;
+  final int globalIndex;
+  final int juz;
+  final int page;
+}
+
+List<QuranRef> buildQuranRefs(List<QuranSurah> surahs) {
+  var global = 0;
+  final refs = <QuranRef>[];
+  for (final s in surahs) {
+    for (final a in s.ayahs) {
+      global++;
+      refs.add(QuranRef(
+        surah: s.number,
+        surahName: s.name,
+        englishName: s.englishName,
+        ayah: a,
+        globalIndex: global,
+        juz: quran.getJuzNumber(s.number, a.number),
+        page: quran.getPageNumber(s.number, a.number),
+      ));
+    }
+  }
+  return refs;
 }
 
 class QuranScreen extends StatefulWidget {
@@ -441,15 +540,32 @@ class QuranScreen extends StatefulWidget {
 }
 
 class _QuranScreenState extends State<QuranScreen> {
-  int selected = 1;
+  QuranBrowseMode mode = QuranBrowseMode.surah;
+  int selectedSurah = 1;
+  int selectedJuz = 1;
+  int selectedPage = 1;
   String search = '';
+
+  late final List<QuranRef> refs = buildQuranRefs(widget.surahs);
+
+  List<QuranRef> get visibleRefs {
+    switch (mode) {
+      case QuranBrowseMode.surah:
+        return refs.where((r) => r.surah == selectedSurah).toList(growable: false);
+      case QuranBrowseMode.juz:
+        return refs.where((r) => r.juz == selectedJuz).toList(growable: false);
+      case QuranBrowseMode.page:
+        return refs.where((r) => r.page == selectedPage).toList(growable: false);
+      case QuranBrowseMode.index:
+        return const [];
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final lang = widget.settings.language;
-    final surah = widget.surahs.firstWhere((s) => s.number == selected);
+    final surah = widget.surahs.firstWhere((s) => s.number == selectedSurah);
     final filtered = widget.surahs.where((s) => search.trim().isEmpty || s.name.contains(search) || s.englishName.toLowerCase().contains(search.toLowerCase()) || '${s.number}' == search.trim()).toList();
-    final menuSurahs = filtered.any((s) => s.number == selected) ? filtered : [surah, ...filtered];
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
@@ -457,69 +573,142 @@ class _QuranScreenState extends State<QuranScreen> {
         Card(
           child: Padding(
             padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Wrap(
-                  spacing: 12,
-                  runSpacing: 12,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  children: [
-                    SizedBox(
-                      width: min(MediaQuery.of(context).size.width - 64, 380),
-                      child: TextField(
-                        decoration: InputDecoration(prefixIcon: const Icon(Icons.search), labelText: t('searchSurah', lang), border: const OutlineInputBorder()),
-                        onChanged: (value) => setState(() => search = value),
-                      ),
-                    ),
-                    DropdownButton<int>(
-                      value: selected,
-                      items: [
-                        for (final s in menuSurahs) DropdownMenuItem(value: s.number, child: Text('${s.number}. ${s.name} — ${s.englishName}')),
-                      ],
-                      onChanged: (value) => setState(() => selected = value ?? selected),
-                    ),
-                    Chip(label: Text('${surah.revelation} • ${surah.ayahCount}')),
-                    Chip(avatar: const Icon(Icons.touch_app_rounded, size: 18), label: Text(t('tapRule', lang))),
-                  ],
-                ),
-                if (widget.settings.showColorGuide) ...[
-                  const SizedBox(height: 12),
-                  Wrap(spacing: 8, runSpacing: 8, children: [for (final r in tajweedRules) RuleChip(rule: r, lang: lang)]),
-                ],
+            child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+              Text(lang == 'ar' ? 'نظام المصحف والفهارس' : 'Mushaf browsing system', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900)),
+              const SizedBox(height: 8),
+              Text(lang == 'ar'
+                  ? 'تصفح القرآن بالسور أو الأجزاء أو الصفحات أو الفهارس. تلوين الأحكام يتم على الحروف نفسها بطبقة رسم فوق النص حتى تبقى الكلمات متصلة وغير مقطعة.'
+                  : 'Browse by surah, juz, pages or indexes. Tajweed coloring is drawn over the continuous text so words remain connected.', style: const TextStyle(height: 1.55, fontWeight: FontWeight.w600)),
+              const SizedBox(height: 12),
+              Wrap(spacing: 8, runSpacing: 8, children: [
+                ChoiceChip(label: Text(t('surahs', lang)), avatar: const Icon(Icons.format_list_numbered_rtl_rounded, size: 18), selected: mode == QuranBrowseMode.surah, onSelected: (_) => setState(() => mode = QuranBrowseMode.surah)),
+                ChoiceChip(label: Text(t('juz', lang)), avatar: const Icon(Icons.pie_chart_rounded, size: 18), selected: mode == QuranBrowseMode.juz, onSelected: (_) => setState(() => mode = QuranBrowseMode.juz)),
+                ChoiceChip(label: Text(t('pages', lang)), avatar: const Icon(Icons.chrome_reader_mode_rounded, size: 18), selected: mode == QuranBrowseMode.page, onSelected: (_) => setState(() => mode = QuranBrowseMode.page)),
+                ChoiceChip(label: Text(t('indexes', lang)), avatar: const Icon(Icons.view_list_rounded, size: 18), selected: mode == QuranBrowseMode.index, onSelected: (_) => setState(() => mode = QuranBrowseMode.index)),
+              ]),
+              const SizedBox(height: 12),
+              if (mode == QuranBrowseMode.surah) _surahPicker(lang, filtered, surah),
+              if (mode == QuranBrowseMode.juz) _numberPicker(context, title: t('juz', lang), value: selectedJuz, min: 1, max: 30, onChanged: (v) => setState(() => selectedJuz = v)),
+              if (mode == QuranBrowseMode.page) _numberPicker(context, title: t('pages', lang), value: selectedPage, min: 1, max: 604, onChanged: (v) => setState(() => selectedPage = v)),
+              if (widget.settings.showColorGuide) ...[
+                const SizedBox(height: 12),
+                Wrap(spacing: 8, runSpacing: 8, children: [for (final r in tajweedRules) RuleChip(rule: r, lang: lang)]),
               ],
-            ),
+            ]),
           ),
         ),
         const SizedBox(height: 12),
-        Card(
-          color: quranPaperColor(widget.settings.themeId, Theme.of(context).brightness),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-            child: Column(
-              children: [
-                Text('﴿ ${surah.name} ﴾', style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w900)),
-                const SizedBox(height: 16),
-                for (final ayah in surah.ayahs) AyahView(ayah: ayah, settings: widget.settings),
-              ],
-            ),
-          ),
-        ),
+        if (mode == QuranBrowseMode.index) _indexView(context, lang) else _mushafView(context, lang, visibleRefs),
       ],
     );
   }
+
+  Widget _surahPicker(String lang, List<QuranSurah> filtered, QuranSurah surah) {
+    final menuSurahs = filtered.any((s) => s.number == selectedSurah) ? filtered : [surah, ...filtered];
+    return Wrap(spacing: 12, runSpacing: 12, crossAxisAlignment: WrapCrossAlignment.center, children: [
+      SizedBox(
+        width: min(MediaQuery.of(context).size.width - 64, 380),
+        child: TextField(
+          decoration: InputDecoration(prefixIcon: const Icon(Icons.search), labelText: t('searchSurah', lang), border: const OutlineInputBorder()),
+          onChanged: (value) => setState(() => search = value),
+        ),
+      ),
+      DropdownButton<int>(
+        value: selectedSurah,
+        items: [for (final s in menuSurahs) DropdownMenuItem(value: s.number, child: Text('${s.number}. ${s.name} — ${s.englishName}'))],
+        onChanged: (value) => setState(() => selectedSurah = value ?? selectedSurah),
+      ),
+      Chip(label: Text('${surah.revelation} • ${surah.ayahCount}')),
+      Chip(avatar: const Icon(Icons.touch_app_rounded, size: 18), label: Text(t('tapRule', lang))),
+    ]);
+  }
+
+  Widget _numberPicker(BuildContext context, {required String title, required int value, required int min, required int max, required ValueChanged<int> onChanged}) {
+    final values = List.generate(max - min + 1, (i) => i + min);
+    return Wrap(spacing: 10, runSpacing: 10, crossAxisAlignment: WrapCrossAlignment.center, children: [
+      Text(title, style: const TextStyle(fontWeight: FontWeight.w900)),
+      DropdownButton<int>(value: value, items: [for (final v in values) DropdownMenuItem(value: v, child: Text('$title $v'))], onChanged: (v) => onChanged(v ?? value)),
+      OutlinedButton.icon(onPressed: value > min ? () => onChanged(value - 1) : null, icon: const Icon(Icons.chevron_right_rounded), label: const Text('السابق')),
+      FilledButton.icon(onPressed: value < max ? () => onChanged(value + 1) : null, icon: const Icon(Icons.chevron_left_rounded), label: const Text('التالي')),
+    ]);
+  }
+
+  Widget _indexView(BuildContext context, String lang) {
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      _indexCard(context, title: t('surahs', lang), icon: Icons.format_list_numbered_rtl_rounded, children: [
+        for (final s in widget.surahs)
+          ActionChip(label: Text('${s.number}. ${s.name}'), onPressed: () => setState(() { selectedSurah = s.number; mode = QuranBrowseMode.surah; }))
+      ]),
+      _indexCard(context, title: t('juz', lang), icon: Icons.pie_chart_rounded, children: [
+        for (var i = 1; i <= 30; i++) ActionChip(label: Text('${t('juz', lang)} $i'), onPressed: () => setState(() { selectedJuz = i; mode = QuranBrowseMode.juz; }))
+      ]),
+      _indexCard(context, title: t('pages', lang), icon: Icons.chrome_reader_mode_rounded, children: [
+        for (var i = 1; i <= 604; i += 10) ActionChip(label: Text('${t('pages', lang)} $i-${min(i + 9, 604)}'), onPressed: () => setState(() { selectedPage = i; mode = QuranBrowseMode.page; }))
+      ]),
+    ]);
+  }
+
+  Widget _indexCard(BuildContext context, {required String title, required IconData icon, required List<Widget> children}) => Card(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Row(children: [Icon(icon, color: Theme.of(context).colorScheme.primary), const SizedBox(width: 8), Text(title, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900))]),
+            const SizedBox(height: 12),
+            Wrap(spacing: 8, runSpacing: 8, children: children),
+          ]),
+        ),
+      );
+
+  Widget _mushafView(BuildContext context, String lang, List<QuranRef> refs) {
+    if (refs.isEmpty) return const SizedBox.shrink();
+    return Card(
+      color: quranPaperColor(widget.settings.themeId, Theme.of(context).brightness),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          Text(_titleForMode(lang, refs), textAlign: TextAlign.center, style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w900)),
+          const SizedBox(height: 8),
+          Text(lang == 'ar' ? 'اضغط على أي حرف ملوّن لمعرفة الحكم وسببه وطريقة أدائه.' : 'Tap colored letters to learn the rule, reason and performance method.', textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w700)),
+          const SizedBox(height: 16),
+          for (var i = 0; i < refs.length; i++) ...[
+            if (i == 0 || refs[i].surah != refs[i - 1].surah) _surahHeader(refs[i]),
+            AyahView(ref: refs[i], settings: widget.settings),
+          ],
+        ]),
+      ),
+    );
+  }
+
+  String _titleForMode(String lang, List<QuranRef> refs) {
+    switch (mode) {
+      case QuranBrowseMode.surah:
+        return '﴿ ${refs.first.surahName} ﴾';
+      case QuranBrowseMode.juz:
+        return '${t('juz', lang)} $selectedJuz';
+      case QuranBrowseMode.page:
+        return '${t('pages', lang)} $selectedPage';
+      case QuranBrowseMode.index:
+        return t('indexes', lang);
+    }
+  }
+
+  Widget _surahHeader(QuranRef ref) => Container(
+        margin: const EdgeInsets.symmetric(vertical: 12),
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+        decoration: BoxDecoration(color: Theme.of(context).colorScheme.primaryContainer.withOpacity(.38), borderRadius: BorderRadius.circular(22)),
+        child: Text('﴿ ${ref.surahName} ﴾', textAlign: TextAlign.center, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900)),
+      );
 }
 
-
 class AyahView extends StatelessWidget {
-  const AyahView({super.key, required this.ayah, required this.settings});
-  final QuranAyah ayah;
+  const AyahView({super.key, required this.ref, required this.settings});
+  final QuranRef ref;
   final SettingsController settings;
 
   @override
   Widget build(BuildContext context) {
-    final text = ayah.text;
-    final fullText = '$text  ﴿${ayah.number}﴾';
+    final text = ref.ayah.text;
+    final fullText = '$text  ﴿${ref.ayah.number}﴾';
     final segments = TajweedAnalyzer.analyze(text);
     final textStyle = TextStyle(
       fontFamily: settings.fontFamily,
@@ -529,51 +718,33 @@ class AyahView extends StatelessWidget {
       fontWeight: FontWeight.w700,
       letterSpacing: 0,
     );
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Directionality(
-            textDirection: TextDirection.rtl,
-            child: GestureDetector(
-              behavior: HitTestBehavior.translucent,
-              onTapDown: (details) {
-                final index = _textIndexAtOffset(fullText, textStyle, constraints.maxWidth, details.localPosition);
-                if (index == null) return;
-                final hit = _segmentAtIndex(segments, index);
-                if (hit != null) showRuleSheet(context, hit.rule, settings.language);
-              },
-              child: CustomPaint(
-                foregroundPainter: TajweedOverlayPainter(
-                  text: fullText,
-                  segments: segments,
-                  style: textStyle,
-                  textDirection: TextDirection.rtl,
-                  textAlign: TextAlign.justify,
-                ),
-                child: Text(
-                  fullText,
-                  textDirection: TextDirection.rtl,
-                  textAlign: TextAlign.justify,
-                  style: textStyle,
-                ),
-              ),
+    return LayoutBuilder(builder: (context, constraints) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Directionality(
+          textDirection: TextDirection.rtl,
+          child: GestureDetector(
+            behavior: HitTestBehavior.translucent,
+            onTapDown: (details) {
+              final index = _textIndexAtOffset(fullText, textStyle, constraints.maxWidth, details.localPosition);
+              if (index == null) return;
+              final hit = _segmentAtIndex(segments, index);
+              if (hit != null) showRuleSheet(context, hit.rule, settings.language);
+            },
+            child: CustomPaint(
+              foregroundPainter: TajweedOverlayPainter(text: fullText, segments: segments, style: textStyle, textDirection: TextDirection.rtl, textAlign: TextAlign.justify),
+              child: Text(fullText, textDirection: TextDirection.rtl, textAlign: TextAlign.justify, style: textStyle),
             ),
           ),
-        );
-      },
-    );
+        ),
+      );
+    });
   }
 
   int? _textIndexAtOffset(String fullText, TextStyle style, double maxWidth, Offset localPosition) {
     if (maxWidth <= 0) return null;
-    final painter = TextPainter(
-      text: TextSpan(text: fullText, style: style),
-      textDirection: TextDirection.rtl,
-      textAlign: TextAlign.justify,
-    )..layout(maxWidth: maxWidth);
-    final pos = painter.getPositionForOffset(localPosition);
-    return pos.offset;
+    final painter = TextPainter(text: TextSpan(text: fullText, style: style), textDirection: TextDirection.rtl, textAlign: TextAlign.justify)..layout(maxWidth: maxWidth);
+    return painter.getPositionForOffset(localPosition).offset;
   }
 
   HighlightSegment? _segmentAtIndex(List<HighlightSegment> segments, int index) {
@@ -595,40 +766,27 @@ class TajweedOverlayPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     if (segments.isEmpty || size.width <= 0) return;
-    final painter = TextPainter(
-      text: TextSpan(text: text, style: style),
-      textDirection: textDirection,
-      textAlign: textAlign,
-      maxLines: null,
-    )..layout(maxWidth: size.width);
+    final layoutPainter = TextPainter(text: TextSpan(text: text, style: style), textDirection: textDirection, textAlign: textAlign, maxLines: null)..layout(maxWidth: size.width);
 
     for (final segment in segments) {
-      final color = segment.rule.color;
-      final boxes = painter.getBoxesForSelection(
-        TextSelection(baseOffset: segment.start, extentOffset: segment.end),
-      );
-
+      final boxes = layoutPainter.getBoxesForSelection(TextSelection(baseOffset: segment.start, extentOffset: segment.end));
+      if (boxes.isEmpty) continue;
+      final clipPath = Path();
       for (final box in boxes) {
-        final boxRect = box.toRect();
-        if (boxRect.width <= 1 || boxRect.height <= 1) continue;
-
-        final markerHeight = (style.fontSize ?? 30) * .15;
-        final top = (boxRect.top + (style.fontSize ?? 30) * .08)
-            .clamp(boxRect.top, boxRect.bottom - markerHeight)
-            .toDouble();
-
-        final rect = Rect.fromLTWH(
-          boxRect.left,
-          top,
-          boxRect.width,
-          markerHeight.clamp(3, 6).toDouble(),
-        );
-        final paint = Paint()..color = color.withOpacity(.68);
-        canvas.drawRRect(
-          RRect.fromRectAndRadius(rect, const Radius.circular(99)),
-          paint,
-        );
+        final r = box.toRect();
+        if (r.width <= 1 || r.height <= 1) continue;
+        clipPath.addRRect(RRect.fromRectAndRadius(r.inflate(1.2), const Radius.circular(4)));
       }
+      canvas.save();
+      canvas.clipPath(clipPath);
+      final coloredPainter = TextPainter(
+        text: TextSpan(text: text, style: style.copyWith(color: segment.rule.color, fontWeight: FontWeight.w900)),
+        textDirection: textDirection,
+        textAlign: textAlign,
+        maxLines: null,
+      )..layout(maxWidth: size.width);
+      coloredPainter.paint(canvas, Offset.zero);
+      canvas.restore();
     }
   }
 
@@ -669,6 +827,251 @@ void showRuleSheet(BuildContext context, TajweedRule rule, String lang) {
       ),
     ),
   );
+}
+
+
+
+class ReciterSource {
+  const ReciterSource({required this.id, required this.arName, required this.enName, required this.baseUrl, this.isTeacher = false});
+  final String id;
+  final String arName;
+  final String enName;
+  final String baseUrl;
+  final bool isTeacher;
+
+  String urlFor(int surah, int ayah) => "$baseUrl/${surah.toString().padLeft(3, '0')}${ayah.toString().padLeft(3, '0')}.mp3";
+}
+
+const reciters = <ReciterSource>[
+  ReciterSource(id: 'minshawi_teacher', arName: 'محمد صديق المنشاوي - المصحف المعلم', enName: 'Minshawi Teacher', baseUrl: 'https://everyayah.com/data/Minshawy_Teacher_128kbps', isTeacher: true),
+  ReciterSource(id: 'husary_muallim', arName: 'محمود خليل الحصري - المصحف المعلم', enName: 'Husary Teacher', baseUrl: 'https://everyayah.com/data/Husary_Muallim_128kbps', isTeacher: true),
+  ReciterSource(id: 'husary', arName: 'محمود خليل الحصري - مرتل', enName: 'Husary Murattal', baseUrl: 'https://everyayah.com/data/Husary_128kbps'),
+  ReciterSource(id: 'minshawi', arName: 'محمد صديق المنشاوي - مرتل', enName: 'Minshawi Murattal', baseUrl: 'https://everyayah.com/data/Minshawy_Murattal_128kbps'),
+  ReciterSource(id: 'abdulbasit', arName: 'عبد الباسط عبد الصمد - مرتل', enName: 'Abdul Basit Murattal', baseUrl: 'https://everyayah.com/data/Abdul_Basit_Murattal_192kbps'),
+  ReciterSource(id: 'alafasy', arName: 'مشاري راشد العفاسي', enName: 'Mishary Alafasy', baseUrl: 'https://everyayah.com/data/Alafasy_128kbps'),
+  ReciterSource(id: 'hani', arName: 'هاني الرفاعي', enName: 'Hani Al-Rifai', baseUrl: 'https://everyayah.com/data/Hani_Rifai_192kbps'),
+  ReciterSource(id: 'ayyoub', arName: 'محمد أيوب', enName: 'Muhammad Ayyoub', baseUrl: 'https://everyayah.com/data/Muhammad_Ayyoub_128kbps'),
+  ReciterSource(id: 'shuraym', arName: 'سعود الشريم', enName: 'Saood Ash-Shuraym', baseUrl: 'https://everyayah.com/data/Saood_ash-Shuraym_128kbps'),
+  ReciterSource(id: 'shaatree', arName: 'أبو بكر الشاطري', enName: 'Abu Bakr Ash-Shaatree', baseUrl: 'https://everyayah.com/data/Abu_Bakr_Ash-Shaatree_128kbps'),
+];
+
+class AudioScreen extends StatefulWidget {
+  const AudioScreen({super.key, required this.settings, required this.surahs});
+  final SettingsController settings;
+  final List<QuranSurah> surahs;
+
+  @override
+  State<AudioScreen> createState() => _AudioScreenState();
+}
+
+class _AudioScreenState extends State<AudioScreen> {
+  final AudioPlayer player = AudioPlayer();
+  int reciterIndex = 0;
+  int selectedSurah = 1;
+  int selectedAyah = 1;
+  bool loading = false;
+  String status = '';
+
+  @override
+  void dispose() {
+    player.dispose();
+    super.dispose();
+  }
+
+  QuranSurah get surah => widget.surahs.firstWhere((s) => s.number == selectedSurah);
+  ReciterSource get reciter => reciters[reciterIndex];
+
+  Future<void> _playSingle() async {
+    await _safePlay([reciter.urlFor(selectedSurah, selectedAyah)]);
+  }
+
+  Future<void> _playSurah() async {
+    final urls = surah.ayahs.map((a) => reciter.urlFor(selectedSurah, a.number)).toList(growable: false);
+    await _safePlay(urls);
+  }
+
+  Future<void> _safePlay(List<String> urls) async {
+    setState(() { loading = true; status = ''; });
+    try {
+      await player.stop();
+      if (urls.length == 1) {
+        await player.setUrl(urls.first);
+      } else {
+        await player.setAudioSources([for (final url in urls) AudioSource.uri(Uri.parse(url))], useLazyPreparation: true);
+      }
+      await player.play();
+      setState(() => status = widget.settings.language == 'ar' ? 'جاري التشغيل...' : 'Playing...');
+    } catch (e) {
+      setState(() => status = widget.settings.language == 'ar' ? 'تعذر تشغيل الصوت. تأكد من الاتصال بالإنترنت أو جرّب قارئًا آخر.' : 'Audio could not be played. Check internet connection or try another reciter.');
+    } finally {
+      if (mounted) setState(() => loading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final lang = widget.settings.language;
+    return ListView(padding: const EdgeInsets.all(16), children: [
+      Card(child: Padding(padding: const EdgeInsets.all(20), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [Icon(Icons.headphones_rounded, color: Theme.of(context).colorScheme.primary), const SizedBox(width: 10), Expanded(child: Text(t('audio', lang), style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900)))]),
+        const SizedBox(height: 8),
+        Text(lang == 'ar' ? 'مشغل تلاوة تعليمي يحتوي على عشرة قرّاء، مع قارئين معلمين على الأقل. يحتاج الصوت إلى اتصال إنترنت، ويمكن لاحقًا إضافة تنزيل الصوت للعمل دون إنترنت بعد مراجعة حقوق النشر والمصادر.' : 'Educational recitation player with 10 reciters including teacher-style recitations. Audio requires internet; offline downloads can be added later after source/licensing review.', style: const TextStyle(height: 1.6, fontWeight: FontWeight.w600)),
+        const SizedBox(height: 16),
+        DropdownButtonFormField<int>(
+          value: reciterIndex,
+          decoration: InputDecoration(labelText: t('reader', lang), prefixIcon: const Icon(Icons.record_voice_over_rounded)),
+          items: [for (var i = 0; i < reciters.length; i++) DropdownMenuItem(value: i, child: Text(lang == 'ar' ? reciters[i].arName : reciters[i].enName))],
+          onChanged: (v) => setState(() => reciterIndex = v ?? reciterIndex),
+        ),
+        const SizedBox(height: 12),
+        Wrap(spacing: 10, runSpacing: 10, crossAxisAlignment: WrapCrossAlignment.center, children: [
+          SizedBox(width: 280, child: DropdownButtonFormField<int>(
+            value: selectedSurah,
+            decoration: InputDecoration(labelText: t('surahs', lang), prefixIcon: const Icon(Icons.menu_book_rounded)),
+            items: [for (final s in widget.surahs) DropdownMenuItem(value: s.number, child: Text('${s.number}. ${s.name}'))],
+            onChanged: (v) => setState(() { selectedSurah = v ?? selectedSurah; selectedAyah = 1; }),
+          )),
+          SizedBox(width: 180, child: DropdownButtonFormField<int>(
+            value: max(1, min(selectedAyah, surah.ayahCount)),
+            decoration: InputDecoration(labelText: lang == 'ar' ? 'الآية' : 'Ayah', prefixIcon: const Icon(Icons.tag_rounded)),
+            items: [for (final a in surah.ayahs) DropdownMenuItem(value: a.number, child: Text('${a.number}'))],
+            onChanged: (v) => setState(() => selectedAyah = v ?? selectedAyah),
+          )),
+        ]),
+        const SizedBox(height: 16),
+        Wrap(spacing: 10, runSpacing: 10, children: [
+          FilledButton.icon(onPressed: loading ? null : _playSingle, icon: const Icon(Icons.play_arrow_rounded), label: Text(t('playAyah', lang))),
+          FilledButton.icon(onPressed: loading ? null : _playSurah, icon: const Icon(Icons.play_circle_fill_rounded), label: Text(t('playSurah', lang))),
+          OutlinedButton.icon(onPressed: () async { await player.stop(); setState(() => status = lang == 'ar' ? 'تم الإيقاف' : 'Stopped'); }, icon: const Icon(Icons.stop_rounded), label: Text(t('stop', lang))),
+        ]),
+        const SizedBox(height: 12),
+        if (loading) const LinearProgressIndicator(),
+        if (status.isNotEmpty) Text(status, style: TextStyle(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.w900)),
+      ]))),
+    ]);
+  }
+}
+
+class AdminScreen extends StatefulWidget {
+  const AdminScreen({super.key, required this.settings});
+  final SettingsController settings;
+  @override
+  State<AdminScreen> createState() => _AdminScreenState();
+}
+
+class _AdminScreenState extends State<AdminScreen> {
+  final question = TextEditingController();
+  final optionA = TextEditingController();
+  final optionB = TextEditingController();
+  final optionC = TextEditingController();
+  final explanation = TextEditingController();
+  final noteTitle = TextEditingController();
+  final noteBody = TextEditingController();
+  final List<Map<String, dynamic>> customQuestions = [];
+  final List<Map<String, dynamic>> customNotes = [];
+  int correct = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    final prefs = await SharedPreferences.getInstance();
+    customQuestions
+      ..clear()
+      ..addAll(((jsonDecode(prefs.getString('admin_questions') ?? '[]') as List).cast<Map<String, dynamic>>()));
+    customNotes
+      ..clear()
+      ..addAll(((jsonDecode(prefs.getString('admin_notes') ?? '[]') as List).cast<Map<String, dynamic>>()));
+    if (mounted) setState(() {});
+  }
+
+  Future<void> _save() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('admin_questions', jsonEncode(customQuestions));
+    await prefs.setString('admin_notes', jsonEncode(customNotes));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final lang = widget.settings.language;
+    return ListView(padding: const EdgeInsets.all(16), children: [
+      Card(child: Padding(padding: const EdgeInsets.all(20), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [Icon(Icons.admin_panel_settings_rounded, color: Theme.of(context).colorScheme.primary), const SizedBox(width: 10), Text(t('adminPanel', lang), style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900))]),
+        const SizedBox(height: 8),
+        Text(lang == 'ar' ? 'هذه لوحة إدارة محلية آمنة للنسخة الحالية. يمكن للمدير إضافة أسئلة وملاحظات وشروحات محلية تظهر في الامتحانات/لوحة الإدارة. للنشر التجاري الاحترافي يُفضّل ربطها لاحقًا بقاعدة بيانات وصلاحيات سيرفر.' : 'Local admin panel for this version. Add local questions and notes. A real backend is recommended for commercial publishing.', style: const TextStyle(height: 1.6, fontWeight: FontWeight.w600)),
+      ]))),
+      Card(child: Padding(padding: const EdgeInsets.all(20), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text(t('addQuestion', lang), style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900)),
+        const SizedBox(height: 10),
+        TextField(controller: question, maxLines: 2, decoration: const InputDecoration(labelText: 'السؤال / Question')),
+        const SizedBox(height: 8),
+        TextField(controller: optionA, decoration: const InputDecoration(labelText: 'الخيار 1')),
+        const SizedBox(height: 8),
+        TextField(controller: optionB, decoration: const InputDecoration(labelText: 'الخيار 2')),
+        const SizedBox(height: 8),
+        TextField(controller: optionC, decoration: const InputDecoration(labelText: 'الخيار 3')),
+        const SizedBox(height: 8),
+        DropdownButtonFormField<int>(value: correct, decoration: const InputDecoration(labelText: 'الإجابة الصحيحة'), items: const [DropdownMenuItem(value: 0, child: Text('الخيار 1')), DropdownMenuItem(value: 1, child: Text('الخيار 2')), DropdownMenuItem(value: 2, child: Text('الخيار 3'))], onChanged: (v) => setState(() => correct = v ?? 0)),
+        const SizedBox(height: 8),
+        TextField(controller: explanation, maxLines: 3, decoration: const InputDecoration(labelText: 'شرح الإجابة')),
+        const SizedBox(height: 12),
+        FilledButton.icon(onPressed: () async {
+          if (question.text.trim().isEmpty || optionA.text.trim().isEmpty || optionB.text.trim().isEmpty || optionC.text.trim().isEmpty) return;
+          customQuestions.add({'q': question.text.trim(), 'a': optionA.text.trim(), 'b': optionB.text.trim(), 'c': optionC.text.trim(), 'correct': correct, 'explanation': explanation.text.trim()});
+          question.clear(); optionA.clear(); optionB.clear(); optionC.clear(); explanation.clear(); correct = 0;
+          await _save();
+          setState(() {});
+        }, icon: const Icon(Icons.add_circle_rounded), label: Text(t('save', lang))),
+      ]))),
+      Card(child: Padding(padding: const EdgeInsets.all(20), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text(lang == 'ar' ? 'إضافة شرح أو ملاحظة إدارية' : 'Add explanation/note', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900)),
+        const SizedBox(height: 10),
+        TextField(controller: noteTitle, decoration: const InputDecoration(labelText: 'العنوان')),
+        const SizedBox(height: 8),
+        TextField(controller: noteBody, maxLines: 5, decoration: const InputDecoration(labelText: 'النص / الشرح')),
+        const SizedBox(height: 12),
+        FilledButton.icon(onPressed: () async {
+          if (noteTitle.text.trim().isEmpty || noteBody.text.trim().isEmpty) return;
+          customNotes.add({'title': noteTitle.text.trim(), 'body': noteBody.text.trim()});
+          noteTitle.clear(); noteBody.clear();
+          await _save();
+          setState(() {});
+        }, icon: const Icon(Icons.library_add_rounded), label: Text(t('save', lang))),
+      ]))),
+      Card(child: Padding(padding: const EdgeInsets.all(20), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text(lang == 'ar' ? 'العناصر المضافة' : 'Added items', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900)),
+        SectionTitle(lang == 'ar' ? 'أسئلة المدير' : 'Admin questions'),
+        if (customQuestions.isEmpty) Text(lang == 'ar' ? 'لا توجد أسئلة مضافة بعد.' : 'No custom questions yet.'),
+        for (var i = 0; i < customQuestions.length; i++) ListTile(
+          leading: CircleAvatar(child: Text('${i + 1}')),
+          title: Text(customQuestions[i]['q'] ?? ''),
+          subtitle: Text(customQuestions[i]['explanation'] ?? ''),
+          trailing: IconButton(icon: const Icon(Icons.delete_rounded), onPressed: () async { customQuestions.removeAt(i); await _save(); setState(() {}); }),
+        ),
+        SectionTitle(lang == 'ar' ? 'شروحات وملاحظات' : 'Notes'),
+        if (customNotes.isEmpty) Text(lang == 'ar' ? 'لا توجد شروحات مضافة بعد.' : 'No notes yet.'),
+        for (var i = 0; i < customNotes.length; i++) ExpansionTile(
+          title: Text(customNotes[i]['title'] ?? ''),
+          children: [Padding(padding: const EdgeInsets.all(12), child: Text(customNotes[i]['body'] ?? '', style: const TextStyle(height: 1.6))), TextButton.icon(onPressed: () async { customNotes.removeAt(i); await _save(); setState(() {}); }, icon: const Icon(Icons.delete_rounded), label: const Text('Delete'))],
+        ),
+      ]))),
+    ]);
+  }
+}
+
+Future<List<QuizQuestion>> loadAdminQuestions() async {
+  final prefs = await SharedPreferences.getInstance();
+  final raw = jsonDecode(prefs.getString('admin_questions') ?? '[]') as List;
+  return raw.cast<Map<String, dynamic>>().map((m) => QuizQuestion(
+    id: 'admin_${m['q'].hashCode}',
+    question: LocalText({'ar': '${m['q']}', 'en': '${m['q']}'}),
+    options: [LocalText({'ar': '${m['a']}', 'en': '${m['a']}'}), LocalText({'ar': '${m['b']}', 'en': '${m['b']}'}), LocalText({'ar': '${m['c']}', 'en': '${m['c']}'}),],
+    correctIndex: (m['correct'] as num?)?.toInt() ?? 0,
+    explanation: LocalText({'ar': '${m['explanation'] ?? ''}', 'en': '${m['explanation'] ?? ''}'}),
+  )).toList(growable: false);
 }
 
 
@@ -1029,6 +1432,38 @@ class _ExamsScreenState extends State<ExamsScreen> {
   }
 }
 
+
+List<QuizQuestion> buildExtraExamQuestions(String examId) {
+  final pool = <QuizQuestion>[];
+  var counter = 0;
+  for (final r in tajweedRules) {
+    pool.add(QuizQuestion(
+      id: 'auto_${examId}_${r.id}_${counter++}',
+      question: LocalText({'ar': "ما الباب الذي ينتمي إليه حكم ${r.title.tr('ar')}؟", 'en': "Which chapter does ${r.title.tr('en')} belong to?"}),
+      options: [
+        LocalText({'ar': r.category, 'en': r.category}),
+        const LocalText({'ar': 'أحكام الوقف فقط', 'en': 'Stopping rules only'}),
+        const LocalText({'ar': 'صفات الحروف فقط', 'en': 'Letter attributes only'}),
+      ],
+      correctIndex: 0,
+      explanation: LocalText({'ar': 'الحكم مرتبط بباب ${r.category}. راجع تعريف الحكم وأسبابه وأمثلة تطبيقه.', 'en': 'This rule is under ${r.category}. Review its definition, causes and examples.'}),
+    ));
+    pool.add(QuizQuestion(
+      id: 'auto_${examId}_${r.id}_${counter++}',
+      question: LocalText({'ar': "أفضل طريقة لتثبيت حكم ${r.title.tr('ar')} هي:", 'en': "The best way to master ${r.title.tr('en')} is:"}),
+      options: const [
+        LocalText({'ar': 'تحديد الموضع ثم معرفة السبب ثم الأداء الصوتي الصحيح', 'en': 'Locate the place, understand the cause, then perform it correctly'}),
+        LocalText({'ar': 'حفظ لون الحكم فقط دون تطبيق', 'en': 'Memorize only the color without practice'}),
+        LocalText({'ar': 'قراءة المثال بسرعة دون مراجعة', 'en': 'Read quickly without review'}),
+      ],
+      correctIndex: 0,
+      explanation: const LocalText({'ar': 'التجويد مهارة أداء، لذلك لا يكفي معرفة الاسم أو اللون؛ لا بد من السبب والتطبيق والمراجعة.', 'en': 'Tajweed is a performance skill; names and colors are not enough without cause, practice and review.'}),
+    ));
+  }
+  pool.shuffle(Random(examId.hashCode));
+  return pool.take(20).toList(growable: false);
+}
+
 class ExamRunnerPage extends StatefulWidget {
   const ExamRunnerPage({super.key, required this.exam, required this.settings});
   final Exam exam;
@@ -1038,15 +1473,23 @@ class ExamRunnerPage extends StatefulWidget {
 }
 
 class _ExamRunnerPageState extends State<ExamRunnerPage> {
-  late final List<QuizQuestion> questions;
-  late final List<int?> answers;
+  List<QuizQuestion> questions = [];
+  List<int?> answers = [];
   bool finished = false;
+  bool loadingQuestions = true;
 
   @override
   void initState() {
     super.initState();
-    questions = [...widget.exam.questions];
+    _loadQuestions();
+  }
+
+  Future<void> _loadQuestions() async {
+    final admin = await loadAdminQuestions();
+    final extra = buildExtraExamQuestions(widget.exam.id);
+    questions = [...widget.exam.questions, ...extra, ...admin];
     answers = List<int?>.filled(questions.length, null);
+    if (mounted) setState(() => loadingQuestions = false);
   }
 
   @override
@@ -1054,12 +1497,33 @@ class _ExamRunnerPageState extends State<ExamRunnerPage> {
     final lang = widget.settings.language;
     final correct = List.generate(questions.length, (i) => answers[i] == questions[i].correctIndex).where((v) => v).length;
     final score = questions.isEmpty ? 0 : ((correct / questions.length) * 100).round();
+    if (loadingQuestions) {
+      return Scaffold(appBar: AppBar(title: Text(widget.exam.title.tr(lang))), body: const Center(child: CircularProgressIndicator()));
+    }
     return Scaffold(
       appBar: AppBar(title: Text(widget.exam.title.tr(lang))),
       body: ListView(padding: const EdgeInsets.all(16), children: [
         if (finished) Card(color: score >= 80 ? Colors.green.withOpacity(.15) : Colors.orange.withOpacity(.15), child: Padding(padding: const EdgeInsets.all(18), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text('${t('score', lang)}: $score%', style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w900)),
-          Text(score >= 80 ? 'ممتاز — يمكنك إصدار شهادة إنجاز داخل التطبيق.' : 'جيد — راجع الأخطاء ثم أعد الاختبار.'),
+          Text(score >= 80 ? (lang == 'ar' ? 'ممتاز — يمكنك إصدار شهادة إنجاز داخل التطبيق.' : 'Excellent — you can issue a completion certificate.') : (lang == 'ar' ? 'جيد — راجع الأخطاء ثم أعد الاختبار.' : 'Good — review mistakes and try again.')),
+          const SizedBox(height: 12),
+          Text(lang == 'ar' ? 'شرح الأخطاء ومناطق المراجعة' : 'Mistake explanations and review areas', style: const TextStyle(fontWeight: FontWeight.w900)),
+          const SizedBox(height: 6),
+          for (var i = 0; i < questions.length; i++)
+            if (answers[i] != questions[i].correctIndex)
+              Container(
+                margin: const EdgeInsets.only(bottom: 8),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(color: Theme.of(context).colorScheme.surface.withOpacity(.75), borderRadius: BorderRadius.circular(16), border: Border.all(color: Theme.of(context).colorScheme.outlineVariant)),
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text('${i + 1}. ${questions[i].question.tr(lang)}', style: const TextStyle(fontWeight: FontWeight.w900)),
+                  const SizedBox(height: 4),
+                  Text('${lang == 'ar' ? 'الإجابة الصحيحة' : 'Correct answer'}: ${questions[i].options[questions[i].correctIndex].tr(lang)}', style: const TextStyle(color: Colors.green, fontWeight: FontWeight.w800)),
+                  const SizedBox(height: 4),
+                  Text(questions[i].explanation.tr(lang), style: const TextStyle(height: 1.5)),
+                ]),
+              ),
+          if (answers.asMap().entries.every((e) => e.value == questions[e.key].correctIndex)) Text(lang == 'ar' ? 'لا توجد أخطاء. أداء ممتاز.' : 'No mistakes. Excellent performance.'),
         ]))),
         for (var i = 0; i < questions.length; i++) Card(child: Padding(padding: const EdgeInsets.all(16), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text('${i + 1}. ${questions[i].question.tr(lang)}', style: const TextStyle(fontWeight: FontWeight.w900)),

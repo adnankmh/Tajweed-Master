@@ -80,8 +80,8 @@ const appStrings = <String, Map<String, String>>{
   'hideNav': {'ar': 'إخفاء القائمة', 'en': 'Hide navigation', 'fr': 'Masquer', 'tr': 'Menüyü gizle', 'es': 'Ocultar menú', 'de': 'Navigation ausblenden'},
   'showNav': {'ar': 'إظهار القائمة', 'en': 'Show navigation', 'fr': 'Afficher', 'tr': 'Menüyü göster', 'es': 'Mostrar menú', 'de': 'Navigation anzeigen'},
   'colorGuideBody': {
-    'ar': 'إظهار أو إخفاء دليل الألوان في صفحة المصحف. التلوين يظهر كخط علوي فوق موضع الحكم دون تقطيع حروف الآية.',
-    'en': 'Show or hide the color guide on the Mushaf page. Highlights appear as upper markers without breaking Quranic letters.',
+    'ar': 'إظهار أو إخفاء دليل الألوان في صفحة المصحف. التلوين يظهر على الحروف نفسها بطبقة رسم فوق النص دون تقطيع الكلمات أو فصل الحروف.',
+    'en': 'Show or hide the color guide on the Mushaf page. Highlights are painted on the letters themselves without splitting or breaking Quranic words.',
     'fr': 'Afficher ou masquer le guide des couleurs.',
     'tr': 'Renk rehberini göster veya gizle.',
     'es': 'Mostrar u ocultar la guía de colores.',
@@ -93,6 +93,24 @@ const appStrings = <String, Map<String, String>>{
   'selfReview': {'ar': 'مراجعة ذاتية', 'en': 'Self review', 'fr': 'Auto-révision', 'tr': 'Öz değerlendirme', 'es': 'Autoevaluación', 'de': 'Selbstkontrolle'},
   'studyMethod': {'ar': 'منهج التطبيق العملي', 'en': 'Practical study method', 'fr': 'Méthode pratique', 'tr': 'Pratik yöntem', 'es': 'Método práctico', 'de': 'Praktische Methode'},
   'publishReady': {'ar': 'جاهز للنشر', 'en': 'Publish ready', 'fr': 'Prêt à publier', 'tr': 'Yayına hazır', 'es': 'Listo para publicar', 'de': 'Bereit zur Veröffentlichung'},
+
+  'audio': {'ar': 'التلاوات', 'en': 'Recitations', 'fr': 'Récitations', 'tr': 'Tilavetler', 'es': 'Recitaciones', 'de': 'Rezitationen'},
+  'reader': {'ar': 'القارئ', 'en': 'Reciter', 'fr': 'Récitateur', 'tr': 'Okuyucu', 'es': 'Recitador', 'de': 'Rezitor'},
+  'playAyah': {'ar': 'تشغيل الآية', 'en': 'Play ayah', 'fr': 'Lire le verset', 'tr': 'Ayeti oynat', 'es': 'Reproducir aleya', 'de': 'Vers abspielen'},
+  'playSurah': {'ar': 'تشغيل السورة', 'en': 'Play surah', 'fr': 'Lire la sourate', 'tr': 'Sureyi oynat', 'es': 'Reproducir sura', 'de': 'Sure abspielen'},
+  'stop': {'ar': 'إيقاف', 'en': 'Stop', 'fr': 'Arrêter', 'tr': 'Durdur', 'es': 'Detener', 'de': 'Stopp'},
+  'surahs': {'ar': 'السور', 'en': 'Surahs', 'fr': 'Sourates', 'tr': 'Sureler', 'es': 'Suras', 'de': 'Suren'},
+  'juz': {'ar': 'الأجزاء', 'en': 'Juz', 'fr': 'Juz', 'tr': 'Cüz', 'es': 'Yuz', 'de': 'Dschuz'},
+  'pages': {'ar': 'الصفحات', 'en': 'Pages', 'fr': 'Pages', 'tr': 'Sayfalar', 'es': 'Páginas', 'de': 'Seiten'},
+  'indexes': {'ar': 'الفهارس', 'en': 'Indexes', 'fr': 'Index', 'tr': 'Fihristler', 'es': 'Índices', 'de': 'Register'},
+  'installApp': {'ar': 'تثبيت التطبيق', 'en': 'Install app', 'fr': 'Installer', 'tr': 'Uygulamayı yükle', 'es': 'Instalar app', 'de': 'App installieren'},
+  'admin': {'ar': 'الإدارة', 'en': 'Admin', 'fr': 'Admin', 'tr': 'Yönetim', 'es': 'Admin', 'de': 'Admin'},
+  'adminPanel': {'ar': 'لوحة الإدارة', 'en': 'Admin panel', 'fr': 'Panneau admin', 'tr': 'Yönetim paneli', 'es': 'Panel admin', 'de': 'Adminbereich'},
+  'username': {'ar': 'اسم المستخدم', 'en': 'Username', 'fr': 'Nom utilisateur', 'tr': 'Kullanıcı adı', 'es': 'Usuario', 'de': 'Benutzername'},
+  'password': {'ar': 'كلمة المرور', 'en': 'Password', 'fr': 'Mot de passe', 'tr': 'Şifre', 'es': 'Contraseña', 'de': 'Passwort'},
+  'login': {'ar': 'تسجيل الدخول', 'en': 'Login', 'fr': 'Connexion', 'tr': 'Giriş', 'es': 'Iniciar sesión', 'de': 'Anmelden'},
+  'logout': {'ar': 'تسجيل الخروج', 'en': 'Logout', 'fr': 'Déconnexion', 'tr': 'Çıkış', 'es': 'Cerrar sesión', 'de': 'Abmelden'},
+  'addQuestion': {'ar': 'إضافة سؤال', 'en': 'Add question', 'fr': 'Ajouter question', 'tr': 'Soru ekle', 'es': 'Añadir pregunta', 'de': 'Frage hinzufügen'},
 };
 
 String t(String key, String lang) => appStrings[key]?[lang] ?? appStrings[key]?['ar'] ?? key;

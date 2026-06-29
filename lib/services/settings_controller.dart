@@ -23,7 +23,7 @@ class SettingsController extends ChangeNotifier {
     if (!themeNames.containsKey(themeId)) themeId = 'light';
     fontFamily = prefs.getString(_fontKey) ?? 'Arial';
     if (!fontFamilies.contains(fontFamily)) fontFamily = 'Arial';
-    quranFontSize = (prefs.getDouble(_fontSizeKey) ?? 30).clamp(20, 48);
+    quranFontSize = (prefs.getDouble(_fontSizeKey) ?? 30).clamp(20, 56).toDouble();
     showColorGuide = prefs.getBool(_guideKey) ?? true;
     notifyListeners();
   }
@@ -47,13 +47,13 @@ class SettingsController extends ChangeNotifier {
   }
 
   Future<void> changeFontSize(double delta) async {
-    quranFontSize = (quranFontSize + delta).clamp(20, 48);
+    quranFontSize = (quranFontSize + delta).clamp(20, 56).toDouble();
     notifyListeners();
     (await SharedPreferences.getInstance()).setDouble(_fontSizeKey, quranFontSize);
   }
 
   Future<void> setFontSize(double value) async {
-    quranFontSize = value.clamp(20, 48);
+    quranFontSize = value.clamp(20, 56).toDouble();
     notifyListeners();
     (await SharedPreferences.getInstance()).setDouble(_fontSizeKey, quranFontSize);
   }
