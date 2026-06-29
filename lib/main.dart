@@ -603,18 +603,35 @@ class TajweedOverlayPainter extends CustomPainter {
     )..layout(maxWidth: size.width);
 
     for (final segment in segments) {
-      final color = segment.rule.color;
-      final boxes = painter.getBoxesForSelection(TextSelection(baseOffset: segment.start, extentOffset: segment.end));
-      for (final box in boxes) {
-        if (box.width <= 1 || box.height <= 1) continue;
-        final markerHeight = (style.fontSize ?? 30) * .15;
-        final top = (box.top + (style.fontSize ?? 30) * .08).clamp(box.top, box.bottom - markerHeight).toDouble();
-        final rect = Rect.fromLTWH(box.left, top, box.width, markerHeight.clamp(3, 6).toDouble());
-        final paint = Paint()..color = color.withOpacity(.68);
-        canvas.drawRRect(RRect.fromRectAndRadius(rect, const Radius.circular(99)), paint);
-      }
-    }
+  final color = segment.rule.color;
+  final boxes = painter.getBoxesForSelection(
+    TextSelection(baseOffset: segment.start, extentOffset: segment.end),
+  );
+
+  for (final box in boxes) {
+    final boxRect = box.toRect();
+
+    if (boxRect.width <= 1 || boxRect.height <= 1) continue;
+
+    final markerHeight = (style.fontSize ?? 30) * .15;
+    final top = (boxRect.top + (style.fontSize ?? 30) * .08)
+        .clamp(boxRect.top, boxRect.bottom - markerHeight)
+        .toDouble();
+
+    final rect = Rect.fromLTWH(
+      boxRect.left,
+      top,
+      boxRect.width,
+      markerHeight.clamp(3, 6).toDouble(),
+    );
+
+    final paint = Paint()..color = color.withOpacity(.68);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(rect, const Radius.circular(99)),
+      paint,
+    );
   }
+}
 
   @override
   bool shouldRepaint(covariant TajweedOverlayPainter oldDelegate) {
