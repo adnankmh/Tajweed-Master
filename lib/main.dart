@@ -497,7 +497,7 @@ class SettingsScreen extends StatelessWidget {
   }
 }
 
-enum QuranBrowseMode { surah, juz, page, index }
+enum QuranBrowseMode { surah, juz, page, quranIndex }
 
 class QuranRef {
   const QuranRef({required this.surah, required this.surahName, required this.englishName, required this.ayah, required this.globalIndex, required this.juz, required this.page});
@@ -556,7 +556,7 @@ class _QuranScreenState extends State<QuranScreen> {
         return refs.where((r) => r.juz == selectedJuz).toList(growable: false);
       case QuranBrowseMode.page:
         return refs.where((r) => r.page == selectedPage).toList(growable: false);
-      case QuranBrowseMode.index:
+      case QuranBrowseMode.quranIndex:
         return const [];
     }
   }
@@ -584,7 +584,7 @@ class _QuranScreenState extends State<QuranScreen> {
                 ChoiceChip(label: Text(t('surahs', lang)), avatar: const Icon(Icons.format_list_numbered_rtl_rounded, size: 18), selected: mode == QuranBrowseMode.surah, onSelected: (_) => setState(() => mode = QuranBrowseMode.surah)),
                 ChoiceChip(label: Text(t('juz', lang)), avatar: const Icon(Icons.pie_chart_rounded, size: 18), selected: mode == QuranBrowseMode.juz, onSelected: (_) => setState(() => mode = QuranBrowseMode.juz)),
                 ChoiceChip(label: Text(t('pages', lang)), avatar: const Icon(Icons.chrome_reader_mode_rounded, size: 18), selected: mode == QuranBrowseMode.page, onSelected: (_) => setState(() => mode = QuranBrowseMode.page)),
-                ChoiceChip(label: Text(t('indexes', lang)), avatar: const Icon(Icons.view_list_rounded, size: 18), selected: mode == QuranBrowseMode.index, onSelected: (_) => setState(() => mode = QuranBrowseMode.index)),
+                ChoiceChip(label: Text(t('indexes', lang)), avatar: const Icon(Icons.view_list_rounded, size: 18), selected: mode == QuranBrowseMode.quranIndex, onSelected: (_) => setState(() => mode = QuranBrowseMode.quranIndex)),
               ]),
               const SizedBox(height: 12),
               if (mode == QuranBrowseMode.surah) _surahPicker(lang, filtered, surah),
@@ -598,7 +598,7 @@ class _QuranScreenState extends State<QuranScreen> {
           ),
         ),
         const SizedBox(height: 12),
-        if (mode == QuranBrowseMode.index) _indexView(context, lang) else _mushafView(context, lang, visibleRefs),
+        if (mode == QuranBrowseMode.quranIndex) _indexView(context, lang) else _mushafView(context, lang, visibleRefs),
       ],
     );
   }
@@ -687,7 +687,7 @@ class _QuranScreenState extends State<QuranScreen> {
         return '${t('juz', lang)} $selectedJuz';
       case QuranBrowseMode.page:
         return '${t('pages', lang)} $selectedPage';
-      case QuranBrowseMode.index:
+      case QuranBrowseMode.quranIndex:
         return t('indexes', lang);
     }
   }
@@ -897,7 +897,7 @@ class _AudioScreenState extends State<AudioScreen> {
       if (urls.length == 1) {
         await player.setUrl(urls.first);
       } else {
-        await player.setAudioSources([for (final url in urls) AudioSource.uri(Uri.parse(url))], useLazyPreparation: true);
+        await player.setAudioSources(   [for (final url in urls) AudioSource.uri(Uri.parse(url))], );
       }
       await player.play();
       setState(() => status = widget.settings.language == 'ar' ? 'جاري التشغيل...' : 'Playing...');
