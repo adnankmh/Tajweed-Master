@@ -205,10 +205,88 @@ final List<LearningDay> learningPlan = List.generate(30, (index) {
   );
 });
 
+
+LocalText _plain(String text) => lt(text, text, text, text, text, text);
+
+LocalText _categoryTitle(String category) {
+  switch (category) {
+    case 'nun':
+      return lt('أحكام النون والتنوين', 'Noon and Tanween', 'Nûn et tanwîn', 'Nun ve tenvin', 'Nûn y tanwîn', 'Nūn und Tanwīn');
+    case 'meem':
+      return lt('أحكام الميم الساكنة', 'Silent Meem', 'Mîm sākin', 'Sakin mim', 'Mim sakina', 'Mīm sākin');
+    case 'madd':
+      return lt('المدود', 'Madd rules', 'Madd', 'Med', 'Madd', 'Madd');
+    case 'sifat':
+      return lt('صفات الحروف', 'Letter attributes', 'Attributs', 'Harf sıfatları', 'Atributos', 'Buchstabeneigenschaften');
+    case 'lam':
+      return lt('اللامات', 'Lam rules', 'Lâm', 'Lam', 'Lam', 'Lam');
+    case 'raa':
+      return lt('الراءات', 'Raa rules', 'Râ', 'Ra', 'Ra', 'Rā');
+    default:
+      return lt('أحكام عامة', 'General rules', 'Règles générales', 'Genel kurallar', 'Reglas generales', 'Allgemeine Regeln');
+  }
+}
+
+List<QuizQuestion> _expandedQuestionsForRules(Iterable<TajweedRule> source) {
+  final selected = source.toList();
+  final allCategories = ['nun', 'meem', 'madd', 'sifat', 'lam', 'raa'];
+  final questions = <QuizQuestion>[];
+  for (final r in selected) {
+    questions.addAll(r.questions);
+    final distractors = tajweedRules.where((x) => x.id != r.id).take(2).toList();
+    final ex = r.examples.firstWhere((e) => !e.contains('ليس') && e.trim().length > 2, orElse: () => r.examples.first);
+    final otherExamples = distractors.map((d) => d.examples.first).toList();
+    final mistakes = tajweedRules.where((x) => x.commonMistakes.isNotEmpty && x.id != r.id).take(2).map((x) => x.commonMistakes.first).toList();
+    final otherCats = allCategories.where((c) => c != r.category).take(2).map(_categoryTitle).toList();
+    questions.addAll([
+      QuizQuestion(
+        id: 'auto_${r.id}_definition',
+        question: lt('أي تعريف يناسب حكم: ${r.title.tr('ar')}؟', 'Which definition matches: ${r.title.tr('en')}?', 'Quelle définition correspond?', 'Hangi tanım uygundur?', '¿Qué definición corresponde?', 'Welche Definition passt?'),
+        options: [r.short, ...distractors.map((d) => d.short)],
+        correctIndex: 0,
+        explanation: lt('التعريف الصحيح هو الذي يصف سبب الحكم وطريقة أدائه لا لونه فقط.', 'The correct definition explains the cause and performance of the rule, not only its color.', 'La bonne définition explique la cause.', 'Doğru tanım sebep ve uygulamayı açıklar.', 'La definición correcta explica causa y ejecución.', 'Die richtige Definition erklärt Ursache und Ausführung.'),
+      ),
+      QuizQuestion(
+        id: 'auto_${r.id}_example',
+        question: lt('أي مثال يرتبط غالبًا بهذا الحكم: ${r.title.tr('ar')}؟', 'Which example is usually linked to this rule?', 'Quel exemple convient?', 'Hangi örnek uygundur?', '¿Qué ejemplo corresponde?', 'Welches Beispiel passt?'),
+        options: [_plain(ex), ...otherExamples.map(_plain)],
+        correctIndex: 0,
+        explanation: lt('ابدأ دائمًا من العلامة أو الحرف ثم راقب ما بعده لتعرف الحكم.', 'Start from the sign or letter, then check what follows.', 'Commencez par le signe.', 'İşaretten başlayın.', 'Empieza por el signo.', 'Beginne beim Zeichen.'),
+      ),
+      QuizQuestion(
+        id: 'auto_${r.id}_mistake',
+        question: lt('أي خطأ ينبغي تجنبه عند تطبيق ${r.title.tr('ar')}؟', 'Which mistake should be avoided?', 'Quelle erreur éviter?', 'Hangi hata önlenmeli?', '¿Qué error evitar?', 'Welchen Fehler vermeiden?'),
+        options: [r.commonMistakes.first, ...mistakes],
+        correctIndex: 0,
+        explanation: lt('تجنّب الخطأ الصوتي أهم من حفظ الاسم؛ لأن المقصود هو تحسين التلاوة.', 'Avoiding the sound mistake matters more than memorizing the name.', 'Éviter l’erreur sonore est essentiel.', 'Ses hatasını önlemek önemlidir.', 'Evitar el error sonoro es esencial.', 'Klangfehler zu vermeiden ist wichtig.'),
+      ),
+      QuizQuestion(
+        id: 'auto_${r.id}_category',
+        question: lt('إلى أي باب ينتمي حكم ${r.title.tr('ar')}؟', 'Which chapter does this rule belong to?', 'À quel chapitre appartient-il?', 'Hangi bölüme aittir?', '¿A qué capítulo pertenece?', 'Zu welchem Kapitel gehört es?'),
+        options: [_categoryTitle(r.category), ...otherCats],
+        correctIndex: 0,
+        explanation: lt('معرفة الباب تساعدك على ترتيب الأحكام وعدم الخلط بينها.', 'Knowing the chapter helps organize rules and avoid confusion.', 'Le chapitre aide à organiser.', 'Bölüm karışıklığı azaltır.', 'El capítulo ayuda a ordenar.', 'Das Kapitel hilft beim Ordnen.'),
+      ),
+      QuizQuestion(
+        id: 'auto_${r.id}_method',
+        question: lt('ما الطريقة العملية الأفضل عند رؤية اللون في المصحف؟', 'What is the best practice when you see a color marker?', 'Quelle est la meilleure méthode?', 'En iyi yöntem nedir?', '¿Cuál es el mejor método?', 'Was ist die beste Methode?'),
+        options: [
+          lt('أحدد سبب الحكم ثم أقرأ الموضع ببطء مع ضبط الصوت', 'Identify the cause, then read slowly with correct sound', 'Identifier puis lire lentement', 'Sebebi bulup yavaş oku', 'Identificar y leer despacio', 'Ursache erkennen und langsam lesen'),
+          lt('أسرع في القراءة حتى أتجاوز الموضع', 'Read faster to pass it', 'Lire plus vite', 'Hızlanmak', 'Leer más rápido', 'Schneller lesen'),
+          lt('أهتم باللون فقط دون النطق', 'Look only at the color', 'Regarder seulement la couleur', 'Sadece renge bakmak', 'Mirar solo el color', 'Nur Farbe beachten'),
+        ],
+        correctIndex: 0,
+        explanation: lt('اللون وسيلة تعليمية، أما الهدف فهو نطق الحكم بطريقة صحيحة.', 'The color is a learning aid; correct recitation is the goal.', 'La couleur aide; la récitation est le but.', 'Renk yardımcıdır; hedef doğru okuyuş.', 'El color ayuda; la meta es la recitación correcta.', 'Farbe hilft; Ziel ist richtige Rezitation.'),
+      ),
+    ]);
+  }
+  return questions;
+}
+
 final List<Exam> exams = [
-  Exam(id: 'placement', level: 'Beginner', minutes: 8, title: lt('اختبار تحديد المستوى', 'Placement test', 'Test de niveau', 'Seviye testi', 'Prueba de nivel', 'Einstufungstest'), description: lt('اختبار قصير يقيس معرفتك الأساسية بالأحكام.', 'A short exam for core knowledge.', 'Test court.', 'Kısa sınav.', 'Prueba corta.', 'Kurzer Test.'), questions: tajweedRules.take(6).expand((r) => r.questions).toList()),
-  Exam(id: 'nun', level: 'Intermediate', minutes: 12, title: lt('امتحان النون والتنوين', 'Noon and Tanween exam', 'Nûn et tanwîn', 'Nun ve tenvin', 'Nûn y tanwîn', 'Nūn und Tanwīn'), description: lt('يركز على الإظهار والإدغام والإقلاب والإخفاء.', 'Focuses on izhar, idgham, iqlab, and ikhfa.', 'Nûn et règles.', 'Nun hükümleri.', 'Reglas de nûn.', 'Nūn-Regeln.'), questions: tajweedRules.where((r) => r.category == 'nun').expand((r) => r.questions).toList()),
-  Exam(id: 'meem_madd', level: 'Intermediate', minutes: 12, title: lt('امتحان الميم والمدود', 'Meem and Madd exam', 'Mîm et Madd', 'Mim ve med', 'Mim y Madd', 'Mīm und Madd'), description: lt('أسئلة الميم الساكنة والمد الطبيعي.', 'Silent meem and natural madd.', 'Mîm et madd.', 'Mim ve med.', 'Mim y Madd.', 'Mīm und Madd.'), questions: tajweedRules.where((r) => ['meem','madd'].contains(r.category)).expand((r) => r.questions).toList()),
-  Exam(id: 'advanced', level: 'Advanced', minutes: 15, title: lt('امتحان الأحكام المتقدمة', 'Advanced rules exam', 'Avancé', 'İleri', 'Avanzado', 'Fortgeschritten'), description: lt('يركز على الصفات واللام والراء.', 'Attributes, lam, and raa.', 'Attributs.', 'Sıfatlar.', 'Atributos.', 'Eigenschaften.'), questions: tajweedRules.where((r) => ['sifat','lam','raa'].contains(r.category)).expand((r) => r.questions).toList()),
-  Exam(id: 'final', level: 'Final', minutes: 25, title: lt('الامتحان النهائي الشامل', 'Final comprehensive exam', 'Final complet', 'Final sınav', 'Examen final', 'Abschlussprüfung'), description: lt('امتحان شامل لكل أبواب التطبيق مع شهادة عند 80٪ فأكثر.', 'A full exam with certificate at 80% or more.', 'Examen complet.', 'Kapsamlı sınav.', 'Examen completo.', 'Umfassende Prüfung.'), questions: tajweedRules.expand((r) => r.questions).toList()),
+  Exam(id: 'placement', level: 'Beginner', minutes: 12, title: lt('اختبار تحديد المستوى', 'Placement test', 'Test de niveau', 'Seviye testi', 'Prueba de nivel', 'Einstufungstest'), description: lt('اختبار موسّع يقيس معرفتك الأساسية بالأحكام مع أسئلة تعريف وأمثلة وأخطاء شائعة.', 'An expanded exam for core knowledge with definitions, examples, and common mistakes.', 'Test élargi.', 'Geniş seviye testi.', 'Prueba ampliada.', 'Erweiterter Test.'), questions: _expandedQuestionsForRules(tajweedRules.take(6))),
+  Exam(id: 'nun', level: 'Intermediate', minutes: 18, title: lt('امتحان النون والتنوين', 'Noon and Tanween exam', 'Nûn et tanwîn', 'Nun ve tenvin', 'Nûn y tanwîn', 'Nūn und Tanwīn'), description: lt('يركز على الإظهار والإدغام والإقلاب والإخفاء مع أمثلة وتمييز الأخطاء.', 'Focuses on izhar, idgham, iqlab, and ikhfa with examples and error recognition.', 'Nûn et règles.', 'Nun hükümleri.', 'Reglas de nûn.', 'Nūn-Regeln.'), questions: _expandedQuestionsForRules(tajweedRules.where((r) => r.category == 'nun'))),
+  Exam(id: 'meem_madd', level: 'Intermediate', minutes: 18, title: lt('امتحان الميم والمدود', 'Meem and Madd exam', 'Mîm et Madd', 'Mim ve med', 'Mim y Madd', 'Mīm und Madd'), description: lt('أسئلة موسّعة في الميم الساكنة والمد الطبيعي مع تدريبات تطبيقية.', 'Expanded questions on silent meem and natural madd.', 'Mîm et madd.', 'Mim ve med.', 'Mim y Madd.', 'Mīm und Madd.'), questions: _expandedQuestionsForRules(tajweedRules.where((r) => ['meem','madd'].contains(r.category)))) ,
+  Exam(id: 'advanced', level: 'Advanced', minutes: 20, title: lt('امتحان الأحكام المتقدمة', 'Advanced rules exam', 'Avancé', 'İleri', 'Avanzado', 'Fortgeschritten'), description: lt('يركز على الصفات واللام والراء مع أسئلة تحليل وتطبيق.', 'Attributes, lam, and raa with analysis questions.', 'Attributs.', 'Sıfatlar.', 'Atributos.', 'Eigenschaften.'), questions: _expandedQuestionsForRules(tajweedRules.where((r) => ['sifat','lam','raa'].contains(r.category)))) ,
+  Exam(id: 'final', level: 'Final', minutes: 35, title: lt('الامتحان النهائي الشامل', 'Final comprehensive exam', 'Final complet', 'Final sınav', 'Examen final', 'Abschlussprüfung'), description: lt('امتحان شامل وكبير لكل أبواب التطبيق مع شهادة عند 80٪ فأكثر.', 'A large comprehensive exam with certificate at 80% or more.', 'Examen complet.', 'Kapsamlı sınav.', 'Examen completo.', 'Umfassende Prüfung.'), questions: _expandedQuestionsForRules(tajweedRules)),
 ];

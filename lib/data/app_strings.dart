@@ -65,6 +65,33 @@ const appStrings = <String, Map<String, String>>{
   'save': {'ar': 'حفظ', 'en': 'Save', 'fr': 'Enregistrer', 'tr': 'Kaydet', 'es': 'Guardar', 'de': 'Speichern'},
   'completed': {'ar': 'مكتمل', 'en': 'Completed', 'fr': 'Terminé', 'tr': 'Tamamlandı', 'es': 'Completado', 'de': 'Abgeschlossen'},
   'markComplete': {'ar': 'تحديد كمكتمل', 'en': 'Mark complete', 'fr': 'Marquer terminé', 'tr': 'Tamamlandı işaretle', 'es': 'Marcar completo', 'de': 'Als erledigt markieren'},
+
+  'settings': {'ar': 'الإعدادات', 'en': 'Settings', 'fr': 'Paramètres', 'tr': 'Ayarlar', 'es': 'Ajustes', 'de': 'Einstellungen'},
+  'settingsBody': {
+    'ar': 'كل تغيير هنا يطبق مباشرة على كامل التطبيق: اللغة، الثيم، نوع الخط، حجم الخط، وخلفية المصحف. تم تقليل الشريط العلوي إلى أيقونات صغيرة حتى تبقى مساحة القراءة واسعة.',
+    'en': 'Every change applies instantly across the whole app: language, theme, font, font size, and Mushaf background. The top bar is now compact icons to keep reading space wide.',
+    'fr': 'Chaque changement s’applique à toute l’application.',
+    'tr': 'Her değişiklik tüm uygulamaya anında uygulanır.',
+    'es': 'Cada cambio se aplica a toda la aplicación.',
+    'de': 'Jede Änderung gilt sofort für die gesamte App.'
+  },
+  'smallerFont': {'ar': 'تصغير الخط', 'en': 'Smaller font', 'fr': 'Réduire', 'tr': 'Küçült', 'es': 'Reducir', 'de': 'Kleiner'},
+  'largerFont': {'ar': 'تكبير الخط', 'en': 'Larger font', 'fr': 'Agrandir', 'tr': 'Büyüt', 'es': 'Aumentar', 'de': 'Größer'},
+  'hideNav': {'ar': 'إخفاء القائمة', 'en': 'Hide navigation', 'fr': 'Masquer', 'tr': 'Menüyü gizle', 'es': 'Ocultar menú', 'de': 'Navigation ausblenden'},
+  'showNav': {'ar': 'إظهار القائمة', 'en': 'Show navigation', 'fr': 'Afficher', 'tr': 'Menüyü göster', 'es': 'Mostrar menú', 'de': 'Navigation anzeigen'},
+  'colorGuideBody': {
+    'ar': 'إظهار أو إخفاء دليل الألوان في صفحة المصحف. التلوين يظهر كخط علوي فوق موضع الحكم دون تقطيع حروف الآية.',
+    'en': 'Show or hide the color guide on the Mushaf page. Highlights appear as upper markers without breaking Quranic letters.',
+    'fr': 'Afficher ou masquer le guide des couleurs.',
+    'tr': 'Renk rehberini göster veya gizle.',
+    'es': 'Mostrar u ocultar la guía de colores.',
+    'de': 'Farblegende anzeigen oder ausblenden.'
+  },
+  'howToIdentify': {'ar': 'كيف تميّز الحكم؟', 'en': 'How to identify it', 'fr': 'Comment l’identifier', 'tr': 'Nasıl tanınır', 'es': 'Cómo identificarlo', 'de': 'So erkennt man es'},
+  'pronunciationMethod': {'ar': 'طريقة الأداء', 'en': 'Pronunciation method', 'fr': 'Méthode', 'tr': 'Telaffuz yöntemi', 'es': 'Método de pronunciación', 'de': 'Aussprache'},
+  'listeningTraining': {'ar': 'تدريب السماع والتكرار', 'en': 'Listening and repetition', 'fr': 'Écoute et répétition', 'tr': 'Dinleme ve tekrar', 'es': 'Escucha y repetición', 'de': 'Hören und Wiederholen'},
+  'selfReview': {'ar': 'مراجعة ذاتية', 'en': 'Self review', 'fr': 'Auto-révision', 'tr': 'Öz değerlendirme', 'es': 'Autoevaluación', 'de': 'Selbstkontrolle'},
+  'studyMethod': {'ar': 'منهج التطبيق العملي', 'en': 'Practical study method', 'fr': 'Méthode pratique', 'tr': 'Pratik yöntem', 'es': 'Método práctico', 'de': 'Praktische Methode'},
   'publishReady': {'ar': 'جاهز للنشر', 'en': 'Publish ready', 'fr': 'Prêt à publier', 'tr': 'Yayına hazır', 'es': 'Listo para publicar', 'de': 'Bereit zur Veröffentlichung'},
 };
 
