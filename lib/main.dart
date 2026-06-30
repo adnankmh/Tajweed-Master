@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 import 'dart:convert';
+import 'dart:ui' as ui;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -913,8 +914,8 @@ class TajweedGlyphPainter extends CustomPainter {
       if (start >= end) continue;
       final boxes = basePainter.getBoxesForSelection(
         TextSelection(baseOffset: start, extentOffset: end),
-        boxHeightStyle: BoxHeightStyle.tight,
-        boxWidthStyle: BoxWidthStyle.tight,
+        boxHeightStyle: ui.BoxHeightStyle.tight,
+        boxWidthStyle: ui.BoxWidthStyle.tight,
       );
       if (boxes.isEmpty) continue;
 
