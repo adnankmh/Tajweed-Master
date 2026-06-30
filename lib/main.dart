@@ -202,7 +202,7 @@ class _HomeShellState extends State<HomeShell> {
           IconButton(
             tooltip: t('settings', lang),
             icon: const Icon(Icons.settings_rounded),
-            onPressed: () => goPage(6),
+            onPressed: () => goPage(7),
           ),
           IconButton(
             tooltip: navVisible ? t('hideNav', lang) : t('showNav', lang),
@@ -217,7 +217,7 @@ class _HomeShellState extends State<HomeShell> {
           final isWide = constraints.maxWidth >= 980;
           final content = Column(
             children: [
-              SettingsBar(settings: widget.settings, onOpenSettings: () => goPage(6)),
+              SettingsBar(settings: widget.settings, onOpenSettings: () => goPage(7)),
               Expanded(child: IndexedStack(index: page, children: children)),
             ],
           );
@@ -768,38 +768,45 @@ class AyahView extends StatelessWidget {
     final textStyle = TextStyle(
       fontFamily: settings.fontFamily,
       fontSize: settings.quranFontSize,
-      height: 2.10,
+      height: 2.05,
       color: Theme.of(context).colorScheme.onSurface,
       fontWeight: FontWeight.w700,
       letterSpacing: 0,
+      wordSpacing: 0,
     );
+
     return LayoutBuilder(builder: (context, constraints) {
+      final width = constraints.maxWidth.isFinite && constraints.maxWidth > 0 ? constraints.maxWidth : MediaQuery.of(context).size.width - 32;
       return AnimatedContainer(
         duration: const Duration(milliseconds: 360),
         curve: Curves.easeOutCubic,
-        margin: const EdgeInsets.symmetric(vertical: 5),
-        padding: const EdgeInsets.symmetric(vertical: 7, horizontal: 8),
+        margin: const EdgeInsets.symmetric(vertical: 4),
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
         decoration: BoxDecoration(
-          color: isPlayingAyah ? Theme.of(context).colorScheme.primaryContainer.withOpacity(.28) : Colors.transparent,
-          borderRadius: BorderRadius.circular(18),
+          color: isPlayingAyah ? Theme.of(context).colorScheme.primaryContainer.withOpacity(.26) : Colors.transparent,
+          borderRadius: BorderRadius.circular(20),
           boxShadow: isPlayingAyah
-              ? [BoxShadow(color: Theme.of(context).colorScheme.primary.withOpacity(.22), blurRadius: 22, spreadRadius: 2)]
+              ? [BoxShadow(color: Theme.of(context).colorScheme.primary.withOpacity(.18), blurRadius: 18, spreadRadius: 1)]
               : const [],
-          border: isPlayingAyah ? Border.all(color: Theme.of(context).colorScheme.primary.withOpacity(.55), width: 1.4) : null,
+          border: isPlayingAyah ? Border.all(color: Theme.of(context).colorScheme.primary.withOpacity(.46), width: 1.2) : null,
         ),
         child: Directionality(
           textDirection: TextDirection.rtl,
           child: GestureDetector(
             behavior: HitTestBehavior.translucent,
             onTapDown: (details) {
-              final index = _textIndexAtOffset(fullText, textStyle, constraints.maxWidth, details.localPosition);
+              final index = _textIndexAtOffset(fullText, textStyle, width, details.localPosition);
               if (index == null) return;
               final hit = _segmentAtIndex(segments, index);
               if (hit != null) showRuleSheet(context, hit.rule, settings.language);
             },
-            child: CustomPaint(
-              foregroundPainter: TajweedOverlayPainter(text: fullText, segments: segments, style: textStyle, textDirection: TextDirection.rtl, textAlign: TextAlign.justify),
-              child: Text(fullText, textDirection: TextDirection.rtl, textAlign: TextAlign.justify, style: textStyle),
+            child: ProfessionalTajweedText(
+              text: fullText,
+              segments: segments,
+              style: textStyle,
+              textDirection: TextDirection.rtl,
+              textAlign: TextAlign.right,
+              maxWidth: width,
             ),
           ),
         ),
@@ -809,7 +816,13 @@ class AyahView extends StatelessWidget {
 
   int? _textIndexAtOffset(String fullText, TextStyle style, double maxWidth, Offset localPosition) {
     if (maxWidth <= 0) return null;
-    final painter = TextPainter(text: TextSpan(text: fullText, style: style), textDirection: TextDirection.rtl, textAlign: TextAlign.justify)..layout(maxWidth: maxWidth);
+    final painter = TextPainter(
+      text: TextSpan(text: fullText, style: style),
+      textDirection: TextDirection.rtl,
+      textAlign: TextAlign.right,
+      maxLines: null,
+      strutStyle: StrutStyle(fontFamily: style.fontFamily, fontSize: style.fontSize, height: style.height, forceStrutHeight: false),
+    )..layout(maxWidth: maxWidth);
     return painter.getPositionForOffset(localPosition).offset;
   }
 
@@ -821,43 +834,108 @@ class AyahView extends StatelessWidget {
   }
 }
 
-class TajweedOverlayPainter extends CustomPainter {
-  TajweedOverlayPainter({required this.text, required this.segments, required this.style, required this.textDirection, required this.textAlign});
+class ProfessionalTajweedText extends StatelessWidget {
+  const ProfessionalTajweedText({
+    super.key,
+    required this.text,
+    required this.segments,
+    required this.style,
+    required this.textDirection,
+    required this.textAlign,
+    required this.maxWidth,
+  });
+
+  final String text;
+  final List<HighlightSegment> segments;
+  final TextStyle style;
+  final TextDirection textDirection;
+  final TextAlign textAlign;
+  final double maxWidth;
+
+  @override
+  Widget build(BuildContext context) {
+    final painter = _buildPainter(style.copyWith(color: Theme.of(context).colorScheme.onSurface));
+    painter.layout(maxWidth: maxWidth);
+    return SizedBox(
+      width: maxWidth,
+      height: painter.height + 4,
+      child: CustomPaint(
+        painter: TajweedGlyphPainter(
+          text: text,
+          segments: segments,
+          style: style.copyWith(color: Theme.of(context).colorScheme.onSurface),
+          textDirection: textDirection,
+          textAlign: textAlign,
+        ),
+      ),
+    );
+  }
+
+  TextPainter _buildPainter(TextStyle effectiveStyle) => TextPainter(
+        text: TextSpan(text: text, style: effectiveStyle),
+        textDirection: textDirection,
+        textAlign: textAlign,
+        maxLines: null,
+        strutStyle: StrutStyle(fontFamily: effectiveStyle.fontFamily, fontSize: effectiveStyle.fontSize, height: effectiveStyle.height, forceStrutHeight: false),
+      );
+}
+
+class TajweedGlyphPainter extends CustomPainter {
+  TajweedGlyphPainter({required this.text, required this.segments, required this.style, required this.textDirection, required this.textAlign});
   final String text;
   final List<HighlightSegment> segments;
   final TextStyle style;
   final TextDirection textDirection;
   final TextAlign textAlign;
 
-  @override
-  void paint(Canvas canvas, Size size) {
-    if (segments.isEmpty || size.width <= 0) return;
-    final layoutPainter = TextPainter(text: TextSpan(text: text, style: style), textDirection: textDirection, textAlign: textAlign, maxLines: null)..layout(maxWidth: size.width);
-
-    for (final segment in segments) {
-      final boxes = layoutPainter.getBoxesForSelection(TextSelection(baseOffset: segment.start, extentOffset: segment.end));
-      if (boxes.isEmpty) continue;
-      final clipPath = Path();
-      for (final box in boxes) {
-        final r = box.toRect();
-        if (r.width <= 1 || r.height <= 1) continue;
-        clipPath.addRRect(RRect.fromRectAndRadius(r.inflate(.35), const Radius.circular(3)));
-      }
-      canvas.save();
-      canvas.clipPath(clipPath);
-      final coloredPainter = TextPainter(
-        text: TextSpan(text: text, style: style.copyWith(color: segment.rule.color)),
+  TextPainter _painterFor(Color color) => TextPainter(
+        text: TextSpan(text: text, style: style.copyWith(color: color)),
         textDirection: textDirection,
         textAlign: textAlign,
         maxLines: null,
-      )..layout(maxWidth: size.width);
+        strutStyle: StrutStyle(fontFamily: style.fontFamily, fontSize: style.fontSize, height: style.height, forceStrutHeight: false),
+      );
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (size.width <= 0) return;
+
+    // Paint the whole Qur'anic text once as a single uninterrupted shaped paragraph.
+    // Then repaint only the selected glyph zones in color through clipping. This keeps
+    // Arabic joining and ligatures intact while making the letters themselves colored.
+    final basePainter = _painterFor(style.color ?? const Color(0xFF111827))..layout(maxWidth: size.width);
+    basePainter.paint(canvas, Offset.zero);
+
+    if (segments.isEmpty) return;
+    for (final segment in segments) {
+      final start = segment.start.clamp(0, text.length).toInt();
+      final end = segment.end.clamp(0, text.length).toInt();
+      if (start >= end) continue;
+      final boxes = basePainter.getBoxesForSelection(
+        TextSelection(baseOffset: start, extentOffset: end),
+        boxHeightStyle: BoxHeightStyle.tight,
+        boxWidthStyle: BoxWidthStyle.tight,
+      );
+      if (boxes.isEmpty) continue;
+
+      final clipPath = Path();
+      for (final box in boxes) {
+        final r = box.toRect();
+        if (r.width <= .5 || r.height <= .5) continue;
+        clipPath.addRect(r.inflate(.15));
+      }
+      if (clipPath.getBounds().isEmpty) continue;
+
+      final coloredPainter = _painterFor(segment.rule.color)..layout(maxWidth: size.width);
+      canvas.save();
+      canvas.clipPath(clipPath);
       coloredPainter.paint(canvas, Offset.zero);
       canvas.restore();
     }
   }
 
   @override
-  bool shouldRepaint(covariant TajweedOverlayPainter oldDelegate) {
+  bool shouldRepaint(covariant TajweedGlyphPainter oldDelegate) {
     return oldDelegate.text != text || oldDelegate.segments != segments || oldDelegate.style != style || oldDelegate.textDirection != textDirection || oldDelegate.textAlign != textAlign;
   }
 }
