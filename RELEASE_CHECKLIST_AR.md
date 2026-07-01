@@ -1,25 +1,12 @@
-# Checklist V13 قبل Android/iOS
+# قائمة فحص V15
 
-## تم
-- [x] هيكلة Enterprise
-- [x] Firebase schema/rules
-- [x] Admin portal مستقل
-- [x] Cloud Functions placeholders
-- [x] Certificates blueprint
-- [x] Gamification blueprint
-- [x] AI recitation pipeline
-- [x] Offline audio blueprint
-- [x] Search blueprint
-- [x] الحفاظ على build web بدون Firebase keys
-
-## قبل النشر النهائي
-- [ ] إنشاء Firebase project
-- [ ] إضافة Firebase config عبر FlutterFire
-- [ ] تفعيل Auth providers
-- [ ] نشر Firestore/Storage rules
-- [ ] نشر Admin portal على subdomain
-- [ ] ربط app repository بـ Firestore
-- [ ] مراجعة علمية لكل أحكام التجويد
-- [ ] إضافة تنبيه دقة الذكاء الاصطناعي
-- [ ] اختبار Android release signing
-- [ ] تجهيز Privacy/Data Safety للمتاجر
+- [ ] تشغيل GitHub Actions بنجاح.
+- [ ] فتح التطبيق من رابط GitHub Pages.
+- [ ] تجربة المصحف بالسور والأجزاء والصفحات.
+- [ ] التأكد من اتجاه النص والمحاذاة RTL.
+- [ ] تجربة الضغط على الحرف الملوّن وفتح الحكم مباشرة.
+- [ ] تجربة تغيير الخط من الأعلى ومن صفحة الإعدادات.
+- [ ] تجربة تغيير حجم الخط والتأكد من تأثيره على المصحف.
+- [ ] تجربة القراء الجدد، خصوصًا العجمي وعبد الباسط والمنشاوي المعلم.
+- [ ] تجربة الامتحانات وظهور النتيجة والتصحيح وشرح الأخطاء.
+- [ ] اختبار التطبيق على الهاتف والكمبيوتر.

@@ -78,9 +78,24 @@ const fontFamilies = [
   'Times New Roman',
   'Georgia',
   'Verdana',
+  'Courier New',
+  'serif',
+  'sans-serif',
+  'monospace',
   'Noto Naskh Arabic',
   'Amiri Quran',
   'Scheherazade New',
+];
+
+const fontFallbacks = [
+  'Arial',
+  'Tahoma',
+  'Segoe UI',
+  'Noto Naskh Arabic',
+  'Amiri Quran',
+  'Scheherazade New',
+  'Times New Roman',
+  'serif',
 ];
 
 const themeNames = {
@@ -123,6 +138,7 @@ ThemeData buildTheme(String id, String fontFamily) {
     colorScheme: colorScheme,
     scaffoldBackgroundColor: c.surface,
     fontFamily: fontFamily,
+    fontFamilyFallback: fontFallbacks,
     appBarTheme: AppBarTheme(
       centerTitle: false,
       elevation: 0,
@@ -141,10 +157,12 @@ ThemeData buildTheme(String id, String fontFamily) {
     ),
     filledButtonTheme: FilledButtonThemeData(
       style: FilledButton.styleFrom(
-        minimumSize: const Size(46, 46),
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-        textStyle: const TextStyle(fontWeight: FontWeight.w900),
+        minimumSize: const Size(48, 48),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        elevation: 1.5,
+        shadowColor: colorScheme.primary.withOpacity(.20),
+        textStyle: const TextStyle(fontWeight: FontWeight.w900, letterSpacing: .1),
       ),
     ),
     outlinedButtonTheme: OutlinedButtonThemeData(

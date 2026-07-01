@@ -156,6 +156,95 @@ final List<TajweedRule> tajweedRules = [
     commonMistakes: [lt('تفخيم كل راء أو ترقيق كل راء بلا نظر للحركة.', 'Making every raa heavy or every raa light.', 'Tout épaissir ou tout alléger.', 'Her ra’yı aynı okumak.', 'Leer todas igual.', 'Alle gleich lesen.')],
     questions: [QuizQuestion(id: 'q_raa_1', question: lt('غالبًا ترقق الراء إذا كانت؟', 'Raa is usually light when?', 'Quand légère?', 'Ne zaman ince?', '¿Cuándo ligera?', 'Wann dünn?'), options: [lt('مكسورة', 'With kasrah', 'Avec kasra', 'Kesreli', 'Con kasra', 'Mit Kasra'), lt('مفتوحة', 'With fatḥah', 'Avec fatha', 'Fethalı', 'Con fatha', 'Mit Fatha'), lt('مضمومة', 'With dammah', 'Avec damma', 'Ötreli', 'Con damma', 'Mit Damma')], correctIndex: 0, explanation: lt('الكسر من أسباب الترقيق.', 'Kasrah causes lightness.', 'Kasra allège.', 'Kesre inceltir.', 'Kasra aligera.', 'Kasra macht dünn.'))],
   ),
+
+  TajweedRule(
+    id: 'meem_izhar',
+    color: const Color(0xFF0F766E),
+    category: 'meem',
+    title: lt('الإظهار الشفوي', 'Labial clear meem', 'Izhar labial', 'Şefevî izhar', 'Izhar labial', 'Lippen-Izhar'),
+    short: lt('إظهار الميم الساكنة إذا جاء بعدها أي حرف غير الباء والميم.', 'Clear silent meem when followed by any letter except baa and meem.', 'Mîm clair sauf ب et م.', 'ب ve م dışında sakin mim açık okunur.', 'Mim clara excepto ب y م.', 'Mīm klar außer vor ب und م.'),
+    deep: lt('الإظهار الشفوي هو الأصل في الميم الساكنة عند أكثر الحروف. لا نغلق الشفتين إغلاقًا زائدًا، ولا ندغم الميم في الحرف التالي، بل تخرج الميم واضحة بزمن طبيعي ثم ينتقل اللسان أو الشفتان إلى الحرف اللاحق بسلاسة. يتدرّب الطالب على الفرق بينه وبين الإخفاء الشفوي عند الباء والإدغام عند الميم.', 'Labial izhar is the normal clear pronunciation of silent meem before most letters. Keep it clear without exaggerated lip pressure and move smoothly to the next letter.', 'Izhar labial: prononcer clairement mîm sākin devant la plupart des lettres.', 'Şefevî izhar, sakin mim çoğu harften önce açık okunur.', 'Izhar labial: mim sakina clara ante la mayoría de letras.', 'Lippen-Izhar: Mīm sākin klar vor den meisten Buchstaben.'),
+    examples: ['أَمْ حَسِبْتُمْ', 'لَهُمْ فِيهَا', 'عَلَيْهِمْ غَيْرِ'],
+    commonMistakes: [lt('إخفاء الميم في كل موضع أو إدغامها بلا سبب.', 'Hiding or merging every silent meem without cause.', 'Cacher ou fusionner sans raison.', 'Sebepsiz gizlemek veya idğam yapmak.', 'Ocultarla o fusionarla sin razón.', 'Ohne Grund verbergen oder verschmelzen.')],
+    questions: [QuizQuestion(id: 'q_meem_izhar_1', question: lt('الإظهار الشفوي يكون إذا جاء بعد الميم الساكنة؟', 'Labial izhar happens after silent meem when the next letter is?', 'Quand?', 'Ne zaman?', '¿Cuándo?', 'Wann?'), options: [lt('غير الباء والميم', 'Other than baa and meem', 'Sauf ب et م', 'ب ve م dışında', 'Excepto ب y م', 'Außer ب und م'), lt('الباء فقط', 'Baa only', 'ب seulement', 'Sadece ب', 'Solo ب', 'Nur ب'), lt('الميم فقط', 'Meem only', 'م seulement', 'Sadece م', 'Solo م', 'Nur م')], correctIndex: 0, explanation: lt('الميم الساكنة تظهر عند باقي الحروف.', 'Silent meem is clear before the remaining letters.', 'Mîm clair devant les autres.', 'Diğer harflerde açık.', 'Clara ante las demás.', 'Klar vor den übrigen.'))],
+  ),
+  TajweedRule(
+    id: 'madd_muttasil',
+    color: const Color(0xFFCA8A04),
+    category: 'madd',
+    title: lt('المد الواجب المتصل', 'Obligatory connected madd', 'Madd connecté', 'Bitişik vacip med', 'Madd conectado', 'Verbundener Madd'),
+    short: lt('أن يأتي حرف المد وبعده همز في الكلمة نفسها ويمد غالبًا أربع أو خمس حركات.', 'A madd letter followed by hamzah in the same word, commonly four or five counts.', 'Lettre de madd suivie de hamza dans le même mot.', 'Aynı kelimede medden sonra hemze.', 'Madd seguido de hamza en la misma palabra.', 'Madd mit Hamza im selben Wort.'),
+    deep: lt('المد المتصل من أهم أبواب المدود لأنه يظهر كثيرًا في التلاوة. سبب المد هنا قوي لاجتماع حرف المد والهمز في كلمة واحدة، ولذلك لا يقرأ كمد طبيعي. يراعي القارئ مقدار المد المعتبر في الرواية التي يقرأ بها، ويمنع الزيادة العشوائية أو النقص الشديد.', 'Connected madd is important because the madd letter and hamzah meet in one word. It should not be read as natural madd; keep the accepted length for the recitation.', 'Madd connecté: med et hamza dans un mot.', 'Bitişik med: med harfi ve hemze aynı kelimede.', 'Madd conectado: madd y hamza en una palabra.', 'Verbundener Madd: Madd und Hamza in einem Wort.'),
+    examples: ['جَاءَ', 'السَّمَاءِ', 'سُوءَ'],
+    commonMistakes: [lt('قراءته حركتين فقط كأنه مد طبيعي.', 'Reading it as only two counts like natural madd.', 'Le lire comme naturel.', 'Tabii med gibi okumak.', 'Leerlo como natural.', 'Wie natürlichen Madd lesen.')],
+    questions: [QuizQuestion(id: 'q_muttasil_1', question: lt('سبب المد المتصل هو اجتماع حرف المد مع؟', 'Connected madd is caused by madd letter with?', 'Avec quoi?', 'Neyle?', '¿Con qué?', 'Womit?'), options: [lt('الهمز في الكلمة نفسها', 'Hamzah in the same word', 'Hamza dans le même mot', 'Aynı kelimede hemze', 'Hamza en la misma palabra', 'Hamza im selben Wort'), lt('السكون فقط', 'Only sukun', 'Sukun seul', 'Sadece sükun', 'Solo sukun', 'Nur Sukun'), lt('التنوين', 'Tanween', 'Tanwîn', 'Tenvin', 'Tanwin', 'Tanwīn')], correctIndex: 0, explanation: lt('الهمز بعد حرف المد في الكلمة نفسها سبب المد المتصل.', 'Hamzah after madd in the same word causes connected madd.', 'Hamza même mot.', 'Aynı kelimede hemze.', 'Hamza misma palabra.', 'Hamza im selben Wort.'))],
+  ),
+  TajweedRule(
+    id: 'madd_munfasil',
+    color: const Color(0xFFB45309),
+    category: 'madd',
+    title: lt('المد الجائز المنفصل', 'Separate permissible madd', 'Madd séparé', 'Ayrı caiz med', 'Madd separado', 'Getrennter Madd'),
+    short: lt('أن يأتي حرف المد آخر كلمة والهمز أول الكلمة التالية.', 'A madd letter at the end of a word followed by hamzah at the start of the next word.', 'Madd fin de mot + hamza mot suivant.', 'Kelime sonunda med, sonraki kelimede hemze.', 'Madd al final y hamza siguiente.', 'Madd am Wortende und Hamza danach.'),
+    deep: lt('سمي منفصلًا لانفصال حرف المد عن الهمز في كلمتين، وجائزًا لاختلاف أوجه القراءة فيه بين القصر والمد. يتعلم الطالب تمييزه بملاحظة نهاية الكلمة وبداية التي بعدها، ثم يلتزم بوجه واحد أثناء القراءة حتى لا يضطرب الأداء.', 'It is separate because madd and hamzah are in two words. Learn it by checking word boundaries and keeping one consistent recitation length.', 'Séparé car deux mots.', 'İki kelimede olduğu için ayrı.', 'Separado por dos palabras.', 'Getrennt wegen zwei Wörtern.'),
+    examples: ['بِمَا أُنزِلَ', 'قُوا أَنفُسَكُمْ', 'فِي أَنْفُسِكُمْ'],
+    commonMistakes: [lt('عدم الانتباه لانفصال الكلمتين.', 'Missing the word boundary.', 'Ne pas voir la séparation.', 'Kelime sınırını kaçırmak.', 'No notar la separación.', 'Wortgrenze übersehen.')],
+    questions: [QuizQuestion(id: 'q_munfasil_1', question: lt('المد المنفصل يكون في؟', 'Separate madd occurs across?', 'Où?', 'Nerede?', '¿Dónde?', 'Wo?'), options: [lt('كلمتين', 'Two words', 'Deux mots', 'İki kelime', 'Dos palabras', 'Zwei Wörter'), lt('كلمة واحدة', 'One word', 'Un mot', 'Tek kelime', 'Una palabra', 'Ein Wort'), lt('حرف واحد فقط', 'One letter only', 'Une lettre', 'Tek harf', 'Una letra', 'Ein Buchstabe')], correctIndex: 0, explanation: lt('حرف المد في كلمة والهمز في كلمة تالية.', 'Madd in one word and hamzah in the next.', 'Deux mots.', 'İki kelime.', 'Dos palabras.', 'Zwei Wörter.'))],
+  ),
+  TajweedRule(
+    id: 'madd_lazim',
+    color: const Color(0xFF92400E),
+    category: 'madd',
+    title: lt('المد اللازم', 'Necessary madd', 'Madd nécessaire', 'Lazım med', 'Madd necesario', 'Notwendiger Madd'),
+    short: lt('مد يأتي بعد حرف المد سكون أصلي، ويمد غالبًا ست حركات.', 'A madd followed by permanent sukun, commonly six counts.', 'Madd suivi d’un sukun original.', 'Medden sonra asli sükun.', 'Madd seguido de sukun original.', 'Madd mit ursprünglichem Sukun.'),
+    deep: lt('المد اللازم من أقوى المدود ويحتاج ضبطًا في الزمن وعدم استعجال. يوجد في كلمات وحروف مقطعة، وسببه السكون الأصلي بعد حرف المد. يدرّب الطالب على عده ست حركات باعتدال دون تمطيط زائد أو انقطاع.', 'Necessary madd is strong and needs careful timing. It occurs when permanent sukun follows a madd letter and is commonly held for six counts.', 'Madd fort, six temps.', 'Kuvvetli med, altı hareke.', 'Madd fuerte, seis tiempos.', 'Starker Madd, sechs Zählzeiten.'),
+    examples: ['الضَّالِّينَ', 'آلآنَ', 'الم'],
+    commonMistakes: [lt('نقص المد أو قطعه قبل تمام الزمن.', 'Shortening or cutting it too early.', 'Trop court.', 'Kısa okumak.', 'Acortarlo.', 'Zu kurz lesen.')],
+    questions: [QuizQuestion(id: 'q_lazim_1', question: lt('غالب مقدار المد اللازم؟', 'Common length of necessary madd?', 'Durée?', 'Süre?', 'Duración?', 'Dauer?'), options: [lt('ست حركات', 'Six counts', 'Six temps', 'Altı hareke', 'Seis tiempos', 'Sechs'), lt('حركتان', 'Two counts', 'Deux', 'İki', 'Dos', 'Zwei'), lt('لا يمد', 'No madd', 'Aucun', 'Yok', 'No', 'Kein')], correctIndex: 0, explanation: lt('الغالب في المد اللازم ست حركات.', 'Necessary madd is commonly six counts.', 'Six temps.', 'Altı.', 'Seis.', 'Sechs.'))],
+  ),
+  TajweedRule(
+    id: 'shamsi',
+    color: const Color(0xFFDC2626),
+    category: 'lam',
+    title: lt('اللام الشمسية', 'Solar lam', 'Lâm solaire', 'Şemsî lam', 'Lam solar', 'Sonnen-Lam'),
+    short: lt('لام التعريف التي لا تنطق وتدغم في الحرف الشمسي بعدها.', 'The definite lam that is not pronounced and merges into the following solar letter.', 'Lam non prononcé devant solaire.', 'Şemsi harfte lam okunmaz.', 'Lam no pronunciada ante solar.', 'Lam wird vor Sonnenbuchstaben nicht gelesen.'),
+    deep: lt('في اللام الشمسية لا تُنطق اللام، بل يشدد الحرف الذي بعدها. علامتها العملية وجود الشدة على الحرف التالي. يتدرب الطالب على عدم إظهار اللام، وعلى إعطاء الحرف المشدد حقه دون زيادة.', 'With solar lam, the lam is not pronounced; the next letter is doubled. Look for shadda on the next letter.', 'Lam solaire: assimilation.', 'Şemsi lam okunmaz.', 'Lam solar se asimila.', 'Sonnen-Lam assimiliert.'),
+    examples: ['الشَّمْسِ', 'الرَّحْمَـٰنِ', 'النَّاسِ'],
+    commonMistakes: [lt('نطق اللام في الكلمات الشمسية.', 'Pronouncing the lam in solar words.', 'Prononcer le lam.', 'Lamı okumak.', 'Pronunciar lam.', 'Lam aussprechen.')],
+    questions: [QuizQuestion(id: 'q_shamsi_1', question: lt('في اللام الشمسية ماذا يحدث للام؟', 'What happens to lam?', 'Que se passe-t-il?', 'Ne olur?', '¿Qué ocurre?', 'Was passiert?'), options: [lt('لا تنطق وتدغم', 'It is not pronounced and merges', 'Elle ne se prononce pas', 'Okunmaz ve idğam olur', 'No se pronuncia', 'Nicht ausgesprochen'), lt('تظهر دائمًا', 'Always clear', 'Toujours claire', 'Daima açık', 'Siempre clara', 'Immer klar'), lt('تمد ست حركات', 'Six-count madd', 'Six temps', 'Altı med', 'Seis tiempos', 'Sechs')], correctIndex: 0, explanation: lt('اللام الشمسية تدغم في الحرف بعدها.', 'Solar lam merges into the next letter.', 'Assimilation.', 'İdğam olur.', 'Se asimila.', 'Assimiliert.'))],
+  ),
+  TajweedRule(
+    id: 'qamari',
+    color: const Color(0xFF2563EB),
+    category: 'lam',
+    title: lt('اللام القمرية', 'Lunar lam', 'Lâm lunaire', 'Kamerî lam', 'Lam lunar', 'Mond-Lam'),
+    short: lt('لام التعريف التي تنطق واضحة قبل الحروف القمرية.', 'The definite lam pronounced clearly before lunar letters.', 'Lam clair.', 'Kamerî lam açık okunur.', 'Lam clara.', 'Mond-Lam klar.'),
+    deep: lt('في اللام القمرية تظهر اللام بوضوح من غير إدغام، وتأتي غالبًا اللام ساكنة بعدها حرف قمري. علامتها العملية خلو الحرف التالي من الشدة. ينبغي عدم إخفاء اللام أو استعجال الانتقال إلى الحرف التالي.', 'Lunar lam is pronounced clearly and not merged. The following letter usually has no shadda.', 'Lam lunaire clair.', 'Kameri lam açıktır.', 'Lam lunar clara.', 'Mond-Lam klar.'),
+    examples: ['الْقَمَرِ', 'الْحَمْدُ', 'الْكِتَابُ'],
+    commonMistakes: [lt('إدغام اللام القمرية كأنها شمسية.', 'Merging lunar lam like solar lam.', 'Fusionner à tort.', 'Yanlış idğam.', 'Fusionarla mal.', 'Falsch verschmelzen.')],
+    questions: [QuizQuestion(id: 'q_qamari_1', question: lt('اللام القمرية تكون؟', 'Lunar lam is?', 'Elle est?', 'Nasıldır?', '¿Cómo es?', 'Wie ist sie?'), options: [lt('ظاهرة واضحة', 'Clear', 'Claire', 'Açık', 'Clara', 'Klar'), lt('مدًا', 'Madd', 'Madd', 'Med', 'Madd', 'Madd'), lt('غنة فقط', 'Only ghunnah', 'Ghunna seule', 'Sadece gunne', 'Solo ghunna', 'Nur Ghunnah')], correctIndex: 0, explanation: lt('اللام القمرية تظهر ولا تدغم.', 'Lunar lam is clear and not merged.', 'Claire.', 'Açık.', 'Clara.', 'Klar.'))],
+  ),
+  TajweedRule(
+    id: 'tafkhim',
+    color: const Color(0xFF7C2D12),
+    category: 'sifat',
+    title: lt('التفخيم', 'Heaviness', 'Emphase', 'Kalınlık', 'Énfasis', 'Dicke Aussprache'),
+    short: lt('تغليظ صوت الحرف وامتلاء الفم بصوته عند حروف الاستعلاء ونحوها.', 'Making the sound heavy, especially with letters of elevation.', 'Épaississement du son.', 'Kalın okuma.', 'Sonido grueso.', 'Dicke Aussprache.'),
+    deep: lt('التفخيم صفة صوتية تحتاج توازنًا؛ فلا يكون الحرف مرققًا ضعيفًا، ولا مبالغًا فيه حتى يخرج عن حدّه. يكثر في حروف الاستعلاء: خص ضغط قظ، ويتأثر ببعض أحكام الراء واللام. التدريب يكون بالمقارنة بين حرف مفخم وحرف مرقق.', 'Heaviness requires balance: neither too light nor exaggerated. It is common in the letters خص ضغط قظ and affected by raa and lam rules.', 'Emphase équilibrée.', 'Dengeli kalınlık.', 'Énfasis equilibrado.', 'Ausgewogene Dicke.'),
+    examples: ['قَالَ', 'خَلَقَ', 'صِرَاطَ', 'الضَّالِّينَ'],
+    commonMistakes: [lt('المبالغة في التفخيم حتى يتغير صوت الحرف.', 'Exaggerating heaviness until the letter changes.', 'Exagérer.', 'Abartmak.', 'Exagerar.', 'Übertreiben.')],
+    questions: [QuizQuestion(id: 'q_tafkhim_1', question: lt('من حروف الاستعلاء؟', 'A heavy/elevated letter is?', 'Lettre emphatique?', 'Kalın harf?', 'Letra enfática?', 'Dicker Buchstabe?'), options: [lt('ق', 'ق', 'ق', 'ق', 'ق', 'ق'), lt('م', 'م', 'م', 'م', 'م', 'م'), lt('ن', 'ن', 'ن', 'ن', 'ن', 'ن')], correctIndex: 0, explanation: lt('القاف من حروف الاستعلاء.', 'Qaf is an elevated/heavy letter.', 'Qaf est emphatique.', 'Kaf kalındır.', 'Qaf es enfática.', 'Qaf ist dick.'))],
+  ),
+  TajweedRule(
+    id: 'waqf',
+    color: const Color(0xFF475569),
+    category: 'waqf',
+    title: lt('الوقف والابتداء', 'Stopping and starting', 'Arrêt et reprise', 'Vakıf ve başlangıç', 'Pausa e inicio', 'Pausen und Beginn'),
+    short: lt('معرفة مواضع الوقف الصحيح والبدء بما لا يخل بالمعنى.', 'Knowing correct stopping points and starting without harming meaning.', 'Bien s’arrêter et reprendre.', 'Doğru vakıf ve başlangıç.', 'Pausar e iniciar bien.', 'Richtig stoppen und beginnen.'),
+    deep: lt('الوقف والابتداء من جماليات التلاوة وفهم المعنى. قد يكون النطق بالحروف صحيحًا، لكن الوقف في موضع غير مناسب يغيّر الفهم أو يضعف المعنى. يتعلم القارئ علامات الوقف، ويفهم الجملة، ويختار موضعًا لا يقطع المعنى. هذا الباب يحتاج تدريبًا مع معلم ومراجعة مستمرة.', 'Stopping and starting connect recitation with meaning. Incorrect stopping may harm the meaning even if pronunciation is good.', 'Arrêt lié au sens.', 'Vakıf anlamla ilgilidir.', 'Pausa ligada al significado.', 'Pause hängt mit Bedeutung zusammen.'),
+    examples: ['الوقوف على رؤوس الآي غالبًا حسن مع مراعاة المعنى', 'مراجعة علامات الوقف: م، لا، ج، صلي، قلي'],
+    commonMistakes: [lt('الوقف في موضع يفسد المعنى أو البدء بكلمة لا يستقيم بها السياق.', 'Stopping where meaning is harmed or starting at a poor point.', 'Arrêt qui nuit au sens.', 'Anlamı bozan vakıf.', 'Pausa que daña el sentido.', 'Sinnschädliche Pause.')],
+    questions: [QuizQuestion(id: 'q_waqf_1', question: lt('الوقف الصحيح يراعي ماذا؟', 'Correct stopping considers?', 'Considère quoi?', 'Neyi dikkate alır?', '¿Qué considera?', 'Was beachtet es?'), options: [lt('المعنى والسياق', 'Meaning and context', 'Sens et contexte', 'Anlam ve bağlam', 'Significado y contexto', 'Bedeutung und Kontext'), lt('اللون فقط', 'Color only', 'Couleur seule', 'Sadece renk', 'Solo color', 'Nur Farbe'), lt('السرعة فقط', 'Speed only', 'Vitesse seule', 'Sadece hız', 'Solo velocidad', 'Nur Geschwindigkeit')], correctIndex: 0, explanation: lt('الوقف مرتبط بصحة المعنى.', 'Stopping is tied to meaning.', 'Lié au sens.', 'Anlamla ilgilidir.', 'Ligado al significado.', 'Mit Bedeutung verbunden.'))],
+  ),
 ];
 
 TajweedRule ruleById(String id) => tajweedRules.firstWhere((r) => r.id == id, orElse: () => tajweedRules.first);
@@ -222,6 +311,8 @@ LocalText _categoryTitle(String category) {
       return lt('اللامات', 'Lam rules', 'Lâm', 'Lam', 'Lam', 'Lam');
     case 'raa':
       return lt('الراءات', 'Raa rules', 'Râ', 'Ra', 'Ra', 'Rā');
+    case 'waqf':
+      return lt('الوقف والابتداء', 'Stopping and starting', 'Arrêt et reprise', 'Vakıf ve başlangıç', 'Pausa e inicio', 'Pausen und Beginn');
     default:
       return lt('أحكام عامة', 'General rules', 'Règles générales', 'Genel kurallar', 'Reglas generales', 'Allgemeine Regeln');
   }

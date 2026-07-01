@@ -9,6 +9,19 @@ class TajweedAnalyzer {
   static final _qalqalah = {'ق', 'ط', 'ب', 'ج', 'د'};
   static final _heavyRaaVowels = {'َ', 'ُ'};
   static final _lightRaaVowels = {'ِ'};
+  static final _tafkhimLetters = {'خ', 'ص', 'ض', 'غ', 'ط', 'ق', 'ظ'};
+  static final _solarLetters = {'ت','ث','د','ذ','ر','ز','س','ش','ص','ض','ط','ظ','ل','ن'};
+  static final _lunarLetters = {'ء','أ','إ','ا','ب','ج','ح','خ','ع','غ','ف','ق','ك','م','ه','و','ي'};
+  static bool _sameWord(String text, int a, int b) {
+    final start = a < b ? a : b;
+    final end = a < b ? b : a;
+    for (var i = start; i <= end && i < text.length; i++) {
+      if (text[i].trim().isEmpty) return false;
+    }
+    return true;
+  }
+  static bool _isHamzaLetter(String ch) => {'ء','أ','إ','ؤ','ئ','آ'}.contains(ch);
+  static bool _isMaddLetter(String ch) => {'ا','ٱ','ى','و','ي'}.contains(ch);
 
   static bool _isMark(String ch) {
     if (ch.isEmpty) return false;
@@ -114,6 +127,7 @@ class TajweedAnalyzer {
           final end = _clusterEnd(text, next);
           if (nextCh == 'ب') _add(segments, i, end, 'meem_ikhfa');
           else if (nextCh == 'م') _add(segments, i, end, 'meem_idgham');
+          else _add(segments, i, _clusterEnd(text, i), 'meem_izhar');
         }
       }
 
@@ -132,6 +146,20 @@ class TajweedAnalyzer {
         _add(segments, i, _clusterEnd(text, i), 'madd');
       }
 
+      if (_isMaddLetter(ch)) {
+        final next = _nextLetterIndex(text, _clusterEnd(text, i));
+        if (next != null && _isHamzaLetter(text[next])) {
+          _add(segments, i, _clusterEnd(text, next), _sameWord(text, i, next) ? 'madd_muttasil' : 'madd_munfasil');
+        }
+        if (next != null && _clusterHas(text, next, _isSukun)) {
+          _add(segments, i, _clusterEnd(text, next), 'madd_lazim');
+        }
+      }
+
+      if (_tafkhimLetters.contains(ch)) {
+        _add(segments, i, _clusterEnd(text, i), 'tafkhim');
+      }
+
       if (_qalqalah.contains(ch) && _clusterHas(text, i, _isSukun)) {
         _add(segments, i, _clusterEnd(text, i), 'qalqalah');
       }
@@ -147,6 +175,21 @@ class TajweedAnalyzer {
     final allah = RegExp(r'(ٱللَّه|اللَّه|للَّه|باللَّه|واللَّه)');
     for (final match in allah.allMatches(text)) {
       _add(segments, match.start, match.end, 'lam_jalalah');
+    }
+
+    // Definite article lam: lunar is clear, solar is merged.
+    for (var i = 0; i < text.length - 2; i++) {
+      if (text[i] == 'ا' && text[i + 1] == 'ل') {
+        final next = _nextLetterIndex(text, i + 2);
+        if (next != null) {
+          final nextCh = text[next];
+          if (_solarLetters.contains(nextCh)) {
+            _add(segments, i + 1, _clusterEnd(text, next), 'shamsi');
+          } else if (_lunarLetters.contains(nextCh)) {
+            _add(segments, i + 1, _clusterEnd(text, i + 1), 'qamari');
+          }
+        }
+      }
     }
 
     segments.sort((a, b) {

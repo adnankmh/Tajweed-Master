@@ -710,14 +710,16 @@ class _QuranScreenState extends State<QuranScreen> {
 
   Widget _mushafView(BuildContext context, String lang, List<QuranRef> refs) {
     if (refs.isEmpty) return const SizedBox.shrink();
-    return Card(
-      color: quranPaperColor(widget.settings.themeId, Theme.of(context).brightness),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Card(
+        color: quranPaperColor(widget.settings.themeId, Theme.of(context).brightness),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
           Text(_titleForMode(lang, refs), textAlign: TextAlign.center, style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w900)),
           const SizedBox(height: 8),
-          Text(lang == 'ar' ? 'اضغط على أي حرف ملوّن لمعرفة الحكم وسببه وطريقة أدائه.' : 'Tap colored letters to learn the rule, reason and performance method.', textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w700)),
+          Text(lang == 'ar' ? 'اضغط مباشرة على الحرف الملوّن لفتح الحكم فورًا مع السبب وطريقة الأداء والأمثلة والأسئلة.' : 'Tap the colored letter directly to open the rule instantly with reason, performance method, examples, and questions.', textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w700)),
           const SizedBox(height: 16),
           for (var i = 0; i < refs.length; i++) ...[
             if (i == 0 || refs[i].surah != refs[i - 1].surah) _surahHeader(refs[i]),
@@ -729,7 +731,8 @@ class _QuranScreenState extends State<QuranScreen> {
               },
             ),
           ],
-        ]),
+          ]),
+        ),
       ),
     );
   }
@@ -768,12 +771,14 @@ class AyahView extends StatelessWidget {
     final segments = TajweedAnalyzer.analyze(text);
     final textStyle = TextStyle(
       fontFamily: settings.fontFamily,
+      fontFamilyFallback: const ['Arial', 'Tahoma', 'Noto Naskh Arabic', 'Amiri Quran', 'Scheherazade New', 'Times New Roman', 'serif'],
       fontSize: settings.quranFontSize,
-      height: 2.05,
+      height: 2.18,
       color: Theme.of(context).colorScheme.onSurface,
       fontWeight: FontWeight.w700,
       letterSpacing: 0,
       wordSpacing: 0,
+      locale: const Locale('ar'),
     );
 
     return LayoutBuilder(builder: (context, constraints) {
@@ -956,9 +961,31 @@ void showRuleSheet(BuildContext context, TajweedRule rule, String lang) {
         children: [
           Row(children: [CircleAvatar(backgroundColor: rule.color), const SizedBox(width: 12), Expanded(child: Text(rule.title.tr(lang), style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900)))]),
           const SizedBox(height: 12),
-          Text(rule.short.tr(lang), style: Theme.of(context).textTheme.titleMedium),
+          Text(rule.short.tr(lang), style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800, height: 1.55)),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.primaryContainer.withOpacity(.35),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: Theme.of(context).colorScheme.primary.withOpacity(.25)),
+            ),
+            child: Text(
+              lang == 'ar'
+                  ? 'تم فتح الحكم من الحرف نفسه. راجع: اسم الحكم، سببه، طريقة النطق، المثال، ثم أجب عن سؤال سريع حتى يثبت في الذاكرة.'
+                  : 'Opened from the colored letter itself. Review the rule name, cause, pronunciation method, example, then answer a quick question.',
+              style: const TextStyle(height: 1.6, fontWeight: FontWeight.w800),
+            ),
+          ),
           const SizedBox(height: 16),
-          Text(rule.deep.tr(lang), style: Theme.of(context).textTheme.bodyLarge?.copyWith(height: 1.7)),
+          Text(rule.deep.tr(lang), style: Theme.of(context).textTheme.bodyLarge?.copyWith(height: 1.85, fontWeight: FontWeight.w600)),
+          const SizedBox(height: 10),
+          Text(
+            lang == 'ar'
+                ? 'طريقة التدريب الاحترافية: اقرأ الموضع ببطء، اسأل نفسك لماذا ظهر هذا الحكم، طبّق الصوت مقدارًا صحيحًا، ثم أعد القراءة بسرعة طبيعية دون تكلف أو مبالغة.'
+                : 'Professional drill: read slowly, identify why the rule appears, perform it with correct timing, then repeat naturally without exaggeration.',
+            style: TextStyle(height: 1.75, color: Theme.of(context).colorScheme.onSurfaceVariant, fontWeight: FontWeight.w700),
+          ),
           const SizedBox(height: 18),
           RuleLearningBlocks(rule: rule, lang: lang),
           const SizedBox(height: 18),
@@ -990,14 +1017,26 @@ class ReciterSource {
 const reciters = <ReciterSource>[
   ReciterSource(id: 'minshawi_teacher', arName: 'محمد صديق المنشاوي - المصحف المعلم', enName: 'Minshawi Teacher', baseUrl: 'https://everyayah.com/data/Minshawy_Teacher_128kbps', isTeacher: true),
   ReciterSource(id: 'husary_muallim', arName: 'محمود خليل الحصري - المصحف المعلم', enName: 'Husary Teacher', baseUrl: 'https://everyayah.com/data/Husary_Muallim_128kbps', isTeacher: true),
+  ReciterSource(id: 'minshawi_murattal', arName: 'محمد صديق المنشاوي - مرتل', enName: 'Minshawi Murattal', baseUrl: 'https://everyayah.com/data/Minshawy_Murattal_128kbps'),
+  ReciterSource(id: 'minshawi_mujawwad', arName: 'محمد صديق المنشاوي - مجود', enName: 'Minshawi Mujawwad', baseUrl: 'https://everyayah.com/data/Minshawy_Mujawwad_192kbps'),
   ReciterSource(id: 'husary', arName: 'محمود خليل الحصري - مرتل', enName: 'Husary Murattal', baseUrl: 'https://everyayah.com/data/Husary_128kbps'),
-  ReciterSource(id: 'minshawi', arName: 'محمد صديق المنشاوي - مرتل', enName: 'Minshawi Murattal', baseUrl: 'https://everyayah.com/data/Minshawy_Murattal_128kbps'),
-  ReciterSource(id: 'abdulbasit', arName: 'عبد الباسط عبد الصمد - مرتل', enName: 'Abdul Basit Murattal', baseUrl: 'https://everyayah.com/data/Abdul_Basit_Murattal_192kbps'),
+  ReciterSource(id: 'abdulbasit_murattal', arName: 'عبد الباسط عبد الصمد - مرتل', enName: 'Abdul Basit Murattal', baseUrl: 'https://everyayah.com/data/Abdul_Basit_Murattal_192kbps'),
+  ReciterSource(id: 'abdulbasit_mujawwad', arName: 'عبد الباسط عبد الصمد - مجود', enName: 'Abdul Basit Mujawwad', baseUrl: 'https://everyayah.com/data/Abdul_Basit_Mujawwad_128kbps'),
+  ReciterSource(id: 'ajamy', arName: 'أحمد بن علي العجمي', enName: 'Ahmed Al-Ajami', baseUrl: 'https://everyayah.com/data/Ahmed_ibn_Ali_al-Ajamy_128kbps_ketaballah.net'),
   ReciterSource(id: 'alafasy', arName: 'مشاري راشد العفاسي', enName: 'Mishary Alafasy', baseUrl: 'https://everyayah.com/data/Alafasy_128kbps'),
+  ReciterSource(id: 'sudais', arName: 'عبد الرحمن السديس', enName: 'Abdurrahman As-Sudais', baseUrl: 'https://everyayah.com/data/Abdurrahmaan_As-Sudais_192kbps'),
+  ReciterSource(id: 'shuraym', arName: 'سعود الشريم', enName: 'Saood Ash-Shuraym', baseUrl: 'https://everyayah.com/data/Saood_ash-Shuraym_128kbps'),
+  ReciterSource(id: 'maher', arName: 'ماهر المعيقلي', enName: 'Maher Al-Muaiqly', baseUrl: 'https://everyayah.com/data/Maher_AlMuaiqly_64kbps'),
   ReciterSource(id: 'hani', arName: 'هاني الرفاعي', enName: 'Hani Al-Rifai', baseUrl: 'https://everyayah.com/data/Hani_Rifai_192kbps'),
   ReciterSource(id: 'ayyoub', arName: 'محمد أيوب', enName: 'Muhammad Ayyoub', baseUrl: 'https://everyayah.com/data/Muhammad_Ayyoub_128kbps'),
-  ReciterSource(id: 'shuraym', arName: 'سعود الشريم', enName: 'Saood Ash-Shuraym', baseUrl: 'https://everyayah.com/data/Saood_ash-Shuraym_128kbps'),
   ReciterSource(id: 'shaatree', arName: 'أبو بكر الشاطري', enName: 'Abu Bakr Ash-Shaatree', baseUrl: 'https://everyayah.com/data/Abu_Bakr_Ash-Shaatree_128kbps'),
+  ReciterSource(id: 'jibreel', arName: 'محمد جبريل', enName: 'Muhammad Jibreel', baseUrl: 'https://everyayah.com/data/Muhammad_Jibreel_128kbps'),
+  ReciterSource(id: 'hudhaify', arName: 'علي الحذيفي', enName: 'Ali Al-Hudhaify', baseUrl: 'https://everyayah.com/data/Hudhaify_128kbps'),
+  ReciterSource(id: 'basfar', arName: 'عبد الله بصفر', enName: 'Abdullah Basfar', baseUrl: 'https://everyayah.com/data/Abdullah_Basfar_192kbps'),
+  ReciterSource(id: 'akhdar', arName: 'إبراهيم الأخضر', enName: 'Ibrahim Al-Akhdar', baseUrl: 'https://everyayah.com/data/Ibrahim_Akhdar_32kbps'),
+  ReciterSource(id: 'tunaiji', arName: 'خليفة الطنيجي', enName: 'Khalifa Al-Tunaiji', baseUrl: 'https://everyayah.com/data/Khalifa_Al_Tunaiji_64kbps'),
+  ReciterSource(id: 'ghamadi', arName: 'سعد الغامدي', enName: 'Saad Al-Ghamadi', baseUrl: 'https://everyayah.com/data/Ghamadi_40kbps'),
+  ReciterSource(id: 'yasser', arName: 'ياسر الدوسري', enName: 'Yasser Al-Dossary', baseUrl: 'https://everyayah.com/data/Yasser_Ad-Dussary_128kbps'),
 ];
 
 class AudioScreen extends StatefulWidget {
@@ -1081,7 +1120,7 @@ class _AudioScreenState extends State<AudioScreen> {
       Card(child: Padding(padding: const EdgeInsets.all(20), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(children: [Icon(Icons.headphones_rounded, color: Theme.of(context).colorScheme.primary), const SizedBox(width: 10), Expanded(child: Text(t('audio', lang), style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900)))]),
         const SizedBox(height: 8),
-        Text(lang == 'ar' ? 'مشغل تلاوة تعليمي يحتوي على عشرة قرّاء، مع قارئين معلمين على الأقل. يحتاج الصوت إلى اتصال إنترنت، ويمكن لاحقًا إضافة تنزيل الصوت للعمل دون إنترنت بعد مراجعة حقوق النشر والمصادر.' : 'Educational recitation player with 10 reciters including teacher-style recitations. Audio requires internet; offline downloads can be added later after source/licensing review.', style: const TextStyle(height: 1.6, fontWeight: FontWeight.w600)),
+        Text(lang == 'ar' ? 'مشغل تلاوة تعليمي احترافي يحتوي على أكثر من عشرين قارئًا، وفيه المصحف المعلم والمنشاوي والحصري وعبد الباسط والعجمي والسديس والشريم وغيرهم. يحتاج الصوت إلى اتصال إنترنت، ويمكن لاحقًا تفعيل تنزيل الصوت للعمل دون إنترنت بعد مراجعة الحقوق والمصادر.' : 'Professional recitation player with 20+ reciters including teacher-style recitations. Audio requires internet; offline downloads can be enabled later after source/licensing review.', style: const TextStyle(height: 1.6, fontWeight: FontWeight.w600)),
         const SizedBox(height: 16),
         DropdownButtonFormField<int>(
           value: reciterIndex,
@@ -1582,7 +1621,7 @@ class _ExamsScreenState extends State<ExamsScreen> {
     return ListView(padding: const EdgeInsets.all(16), children: [
       for (final exam in exams)
         Card(child: Padding(padding: const EdgeInsets.all(18), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Row(children: [Expanded(child: Text(exam.title.tr(lang), style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900))), Chip(label: Text(exam.level)), Chip(label: Text('${exam.minutes} min'))]),
+          Row(children: [Expanded(child: Text(exam.title.tr(lang), style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900))), Chip(label: Text(exam.level)), Chip(label: Text('${exam.minutes} min')), Chip(label: Text('${exam.questions.length}+ ${lang == 'ar' ? 'سؤال' : 'Q'}'))]),
           const SizedBox(height: 8),
           Text(exam.description.tr(lang)),
           const SizedBox(height: 8),
@@ -1627,7 +1666,7 @@ List<QuizQuestion> buildExtraExamQuestions(String examId) {
     ));
   }
   pool.shuffle(Random(examId.hashCode));
-  return pool.take(20).toList(growable: false);
+  return pool.take(60).toList(growable: false);
 }
 
 class ExamRunnerPage extends StatefulWidget {
@@ -1671,7 +1710,14 @@ class _ExamRunnerPageState extends State<ExamRunnerPage> {
       body: ListView(padding: const EdgeInsets.all(16), children: [
         if (finished) Card(color: score >= 80 ? Colors.green.withOpacity(.15) : Colors.orange.withOpacity(.15), child: Padding(padding: const EdgeInsets.all(18), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text('${t('score', lang)}: $score%', style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w900)),
-          Text(score >= 80 ? (lang == 'ar' ? 'ممتاز — يمكنك إصدار شهادة إنجاز داخل التطبيق.' : 'Excellent — you can issue a completion certificate.') : (lang == 'ar' ? 'جيد — راجع الأخطاء ثم أعد الاختبار.' : 'Good — review mistakes and try again.')),
+          const SizedBox(height: 8),
+          Wrap(spacing: 8, runSpacing: 8, children: [
+            Chip(avatar: const Icon(Icons.check_circle_rounded, color: Colors.green), label: Text('${lang == 'ar' ? 'صحيح' : 'Correct'}: $correct')),
+            Chip(avatar: const Icon(Icons.cancel_rounded, color: Colors.red), label: Text('${lang == 'ar' ? 'أخطاء' : 'Mistakes'}: ${questions.length - correct}')),
+            Chip(avatar: const Icon(Icons.quiz_rounded), label: Text('${lang == 'ar' ? 'عدد الأسئلة' : 'Questions'}: ${questions.length}')),
+          ]),
+          const SizedBox(height: 10),
+          Text(score >= 80 ? (lang == 'ar' ? 'ممتاز — يمكنك إصدار شهادة إنجاز داخل التطبيق. حافظ على المراجعة اليومية وراجع المواضع الملونة في المصحف.' : 'Excellent — you can issue a completion certificate. Keep daily review and revisit colored places in the Mushaf.') : (lang == 'ar' ? 'جيد — راجع الأخطاء التي ظهرت أسفل النتيجة، ثم أعد الاختبار بعد قراءة الشرح والأمثلة.' : 'Good — review the mistakes below, then retake the exam after reading explanations and examples.')),
           const SizedBox(height: 12),
           Text(lang == 'ar' ? 'شرح الأخطاء ومناطق المراجعة' : 'Mistake explanations and review areas', style: const TextStyle(fontWeight: FontWeight.w900)),
           const SizedBox(height: 6),
