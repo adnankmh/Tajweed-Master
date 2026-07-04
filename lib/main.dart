@@ -837,7 +837,7 @@ class AyahView extends StatelessWidget {
       textAlign: TextAlign.right,
       maxLines: null,
       strutStyle: StrutStyle(fontFamily: style.fontFamily, fontSize: style.fontSize, height: style.height, forceStrutHeight: false),
-    )..layout(maxWidth: maxWidth);
+    )..layout(minWidth: maxWidth, maxWidth: maxWidth);
     return painter.getPositionForOffset(localPosition).offset;
   }
 
@@ -918,7 +918,8 @@ class TajweedGlyphPainter extends CustomPainter {
     // Paint the whole Qur'anic text once as a single uninterrupted shaped paragraph.
     // Then repaint only the selected glyph zones in color through clipping. This keeps
     // Arabic joining and ligatures intact while making the letters themselves colored.
-    final basePainter = _painterFor(style.color ?? const Color(0xFF111827))..layout(maxWidth: size.width);
+    final basePainter = _painterFor(style.color ?? const Color(0xFF111827))
+      ..layout(minWidth: size.width, maxWidth: size.width);
     basePainter.paint(canvas, Offset.zero);
 
     if (segments.isEmpty) return;
@@ -941,7 +942,8 @@ class TajweedGlyphPainter extends CustomPainter {
       }
       if (clipPath.getBounds().isEmpty) continue;
 
-      final coloredPainter = _painterFor(segment.rule.color)..layout(maxWidth: size.width);
+      final coloredPainter = _painterFor(segment.rule.color)
+        ..layout(minWidth: size.width, maxWidth: size.width);
       canvas.save();
       canvas.clipPath(clipPath);
       coloredPainter.paint(canvas, Offset.zero);
