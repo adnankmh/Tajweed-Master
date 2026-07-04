@@ -12,11 +12,12 @@ permissions:
   id-token: write
 
 concurrency:
-  group: flutter-web-pages
+  group: github-pages
   cancel-in-progress: true
 
 jobs:
   build:
+    name: Build Flutter Web
     runs-on: ubuntu-latest
 
     steps:
@@ -34,25 +35,41 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Create web platform
+      - name: Create Web platform
         run: flutter create --platforms=web .
 
       - name: Build Flutter Web
-        run: flutter build web --release --pwa-strategy offline-first --base-href "/Tajweed-Master/"
+        run: flutter build web --release --base-href "/Tajweed-Master/"
 
-      - name: Upload Web Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: tajweed-master-web
-          path: build/web
+      - name: Include Admin Panel
+        run: |
+          if [ -d "admin_panel" ]; then
+            mkdir -p build/web/admin
+            cp -r admin_panel/* build/web/admin/
+          fi
 
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
+      - name: Add nojekyll
+        run: touch build/web/.nojekyll
 
       - name: Upload Pages Artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: build/web
 
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    permissions:
+      pages: write
+      id-token: write
+
+    steps:
       - name: Deploy to GitHub Pages
+        id: deployment
         uses: actions/deploy-pages@v4
