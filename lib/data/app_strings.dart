@@ -110,6 +110,24 @@ const appStrings = <String, Map<String, String>>{
   'password': {'ar': 'كلمة المرور', 'en': 'Password', 'fr': 'Mot de passe', 'tr': 'Şifre', 'es': 'Contraseña', 'de': 'Passwort'},
   'login': {'ar': 'تسجيل الدخول', 'en': 'Login', 'fr': 'Connexion', 'tr': 'Giriş', 'es': 'Iniciar sesión', 'de': 'Anmelden'},
   'logout': {'ar': 'تسجيل الخروج', 'en': 'Logout', 'fr': 'Déconnexion', 'tr': 'Çıkış', 'es': 'Cerrar sesión', 'de': 'Abmelden'},
+
+  'mushafBackground': {'ar': 'خلفية المصحف', 'en': 'Mushaf background', 'fr': 'Fond du Moushaf', 'tr': 'Mushaf arka planı', 'es': 'Fondo del Mushaf', 'de': 'Mushaf-Hintergrund'},
+  'mushafBackgroundBody': {
+    'ar': 'اختر لون صفحة المصحف مباشرة. هذا الاختيار مستقل عن الثيم العام، ويطبّق فورًا على صفحة القراءة مع الحفاظ على وضوح ألوان أحكام التجويد.',
+    'en': 'Choose the Mushaf page color directly. This is independent from the global theme and applies instantly while keeping Tajweed colors readable.',
+    'fr': 'Choisissez la couleur de la page du Moushaf. Elle s’applique immédiatement tout en gardant les couleurs lisibles.',
+    'tr': 'Mushaf sayfasının rengini seçin. Genel temadan bağımsızdır ve hemen uygulanır.',
+    'es': 'Elige el color de la página del Mushaf. Se aplica al instante y mantiene legibles los colores.',
+    'de': 'Wählen Sie die Mushaf-Seitenfarbe. Sie gilt sofort und hält die Farben lesbar.'
+  },
+  'mushafAudio': {'ar': 'تشغيل السورة من صفحة المصحف', 'en': 'Play from Mushaf page', 'fr': 'Lire depuis le Moushaf', 'tr': 'Mushaf sayfasından dinle', 'es': 'Reproducir desde el Mushaf', 'de': 'Aus der Mushaf-Seite abspielen'},
+  'playSurahHere': {'ar': 'تشغيل السورة هنا', 'en': 'Play surah here', 'fr': 'Lire ici', 'tr': 'Sureyi burada oynat', 'es': 'Reproducir aquí', 'de': 'Hier abspielen'},
+  'playing': {'ar': 'الآية', 'en': 'Ayah', 'fr': 'Verset', 'tr': 'Ayet', 'es': 'Aleya', 'de': 'Vers'},
+  'previous': {'ar': 'السابق', 'en': 'Previous', 'fr': 'Précédent', 'tr': 'Önceki', 'es': 'Anterior', 'de': 'Zurück'},
+  'next': {'ar': 'التالي', 'en': 'Next', 'fr': 'Suivant', 'tr': 'Sonraki', 'es': 'Siguiente', 'de': 'Weiter'},
+  'advancedDrills': {'ar': 'تدريبات متقدمة', 'en': 'Advanced drills', 'fr': 'Exercices avancés', 'tr': 'İleri alıştırmalar', 'es': 'Prácticas avanzadas', 'de': 'Fortgeschrittene Übungen'},
+  'reviewChecklist': {'ar': 'قائمة مراجعة الأداء', 'en': 'Performance checklist', 'fr': 'Liste de révision', 'tr': 'Performans listesi', 'es': 'Lista de revisión', 'de': 'Leistungs-Checkliste'},
+
   'addQuestion': {'ar': 'إضافة سؤال', 'en': 'Add question', 'fr': 'Ajouter question', 'tr': 'Soru ekle', 'es': 'Añadir pregunta', 'de': 'Frage hinzufügen'},
 };
 

@@ -26,6 +26,7 @@ Future<void> main() async {
   final settings = SettingsController();
   await settings.load();
   await NotificationService().initialize();
+  appAudioController = AppAudioController();
   runApp(TajweedApp(settings: settings));
 }
 
@@ -352,6 +353,7 @@ class SettingsBar extends StatelessWidget {
           children: [
             _MiniToolButton(tooltip: t('language', lang), icon: Icons.translate_rounded, onTap: () => _showChoiceSheet(context, title: t('language', lang), value: settings.language, items: supportedLanguages.map((code) => MapEntry(code, languageNames[code] ?? code)).toList(), onSelected: settings.setLanguage)),
             _MiniToolButton(tooltip: t('theme', lang), icon: Icons.palette_rounded, onTap: () => _showChoiceSheet(context, title: t('theme', lang), value: settings.themeId, items: themeNames.entries.map((e) => MapEntry(e.key, e.value[lang] ?? e.value['ar']!)).toList(), onSelected: settings.setThemeId)),
+            _MiniToolButton(tooltip: t('mushafBackground', lang), icon: Icons.wallpaper_rounded, onTap: () => _showChoiceSheet(context, title: t('mushafBackground', lang), value: settings.mushafBackgroundId, items: mushafBackgroundNames.entries.map((e) => MapEntry(e.key, e.value[lang] ?? e.value['ar']!)).toList(), onSelected: settings.setMushafBackground)),
             _MiniToolButton(tooltip: t('font', lang), icon: Icons.font_download_rounded, onTap: () => _showChoiceSheet(context, title: t('font', lang), value: settings.fontFamily, items: fontFamilies.map((f) => MapEntry(f, f)).toList(), onSelected: settings.setFontFamily)),
             _MiniToolButton(tooltip: t('smallerFont', lang), icon: Icons.text_decrease_rounded, onTap: () => settings.changeFontSize(-2)),
             _MiniToolButton(tooltip: t('largerFont', lang), icon: Icons.text_increase_rounded, onTap: () => settings.changeFontSize(2)),
@@ -457,6 +459,10 @@ class SettingsScreen extends StatelessWidget {
                 Wrap(spacing: 8, runSpacing: 8, children: [for (final code in supportedLanguages) ChoiceChip(label: Text(languageNames[code] ?? code), selected: settings.language == code, onSelected: (_) => settings.setLanguage(code))]),
                 SectionTitle(t('theme', lang)),
                 Wrap(spacing: 8, runSpacing: 8, children: [for (final item in themeNames.entries) ChoiceChip(label: Text(item.value[lang] ?? item.value['ar']!), selected: settings.themeId == item.key, onSelected: (_) => settings.setThemeId(item.key))]),
+                SectionTitle(t('mushafBackground', lang)),
+                Text(t('mushafBackgroundBody', lang), style: const TextStyle(height: 1.5, fontWeight: FontWeight.w600)),
+                const SizedBox(height: 8),
+                Wrap(spacing: 8, runSpacing: 8, children: [for (final item in mushafBackgroundNames.entries) ChoiceChip(label: Text(item.value[lang] ?? item.value['ar']!), selected: settings.mushafBackgroundId == item.key, onSelected: (_) => settings.setMushafBackground(item.key))]),
                 SectionTitle(t('font', lang)),
                 Text(lang == 'ar' ? 'اختيار الخط يطبق على المصحف والواجهة فورًا. في نسخة الويب يعتمد ظهور بعض الخطوط على توفرها في المتصفح أو الجهاز.' : 'Font changes apply instantly to the Mushaf and UI. On web, some fonts depend on browser/device availability.', style: const TextStyle(height: 1.5)),
                 const SizedBox(height: 8),
@@ -677,8 +683,8 @@ class _QuranScreenState extends State<QuranScreen> {
     return Wrap(spacing: 10, runSpacing: 10, crossAxisAlignment: WrapCrossAlignment.center, children: [
       Text(title, style: const TextStyle(fontWeight: FontWeight.w900)),
       DropdownButton<int>(value: value, items: [for (final v in values) DropdownMenuItem(value: v, child: Text('$title $v'))], onChanged: (v) => onChanged(v ?? value)),
-      OutlinedButton.icon(onPressed: value > min ? () => onChanged(value - 1) : null, icon: const Icon(Icons.chevron_right_rounded), label: const Text('السابق')),
-      FilledButton.icon(onPressed: value < max ? () => onChanged(value + 1) : null, icon: const Icon(Icons.chevron_left_rounded), label: const Text('التالي')),
+      OutlinedButton.icon(onPressed: value > min ? () => onChanged(value - 1) : null, icon: const Icon(Icons.chevron_right_rounded), label: Text(t('previous', widget.settings.language))),
+      FilledButton.icon(onPressed: value < max ? () => onChanged(value + 1) : null, icon: const Icon(Icons.chevron_left_rounded), label: Text(t('next', widget.settings.language))),
     ]);
   }
 
@@ -710,16 +716,19 @@ class _QuranScreenState extends State<QuranScreen> {
 
   Widget _mushafView(BuildContext context, String lang, List<QuranRef> refs) {
     if (refs.isEmpty) return const SizedBox.shrink();
+    final currentSurah = widget.surahs.firstWhere((s) => s.number == refs.first.surah);
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Card(
-        color: quranPaperColor(widget.settings.themeId, Theme.of(context).brightness),
+        color: quranPaperColor(widget.settings.themeId, Theme.of(context).brightness, widget.settings.mushafBackgroundId),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
           child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
           Text(_titleForMode(lang, refs), textAlign: TextAlign.center, style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w900)),
           const SizedBox(height: 8),
-          Text(lang == 'ar' ? 'اضغط مباشرة على الحرف الملوّن لفتح الحكم فورًا مع السبب وطريقة الأداء والأمثلة والأسئلة.' : 'Tap the colored letter directly to open the rule instantly with reason, performance method, examples, and questions.', textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w700)),
+          Text(lang == 'ar' ? 'اضغط مباشرة على الحرف الملوّن لفتح الحكم فورًا مع السبب وطريقة الأداء والأمثلة والأسئلة. اتجاه النص ومحاذاته من اليمين إلى اليسار داخل المصحف.' : 'Tap the colored letter directly to open the rule instantly. The Mushaf text is right-to-left with direct letter coloring.', textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w700, height: 1.5)),
+          const SizedBox(height: 12),
+          MushafAudioPanel(settings: widget.settings, surah: currentSurah),
           const SizedBox(height: 16),
           for (var i = 0; i < refs.length; i++) ...[
             if (i == 0 || refs[i].surah != refs[i - 1].surah) _surahHeader(refs[i]),
@@ -988,6 +997,7 @@ void showRuleSheet(BuildContext context, TajweedRule rule, String lang) {
           ),
           const SizedBox(height: 18),
           RuleLearningBlocks(rule: rule, lang: lang),
+          AdvancedPracticeBlocks(rule: rule, lang: lang),
           const SizedBox(height: 18),
           SectionTitle(t('examples', lang)),
           for (final e in rule.examples) QuranExample(e),
@@ -1038,6 +1048,151 @@ const reciters = <ReciterSource>[
   ReciterSource(id: 'ghamadi', arName: 'سعد الغامدي', enName: 'Saad Al-Ghamadi', baseUrl: 'https://everyayah.com/data/Ghamadi_40kbps'),
   ReciterSource(id: 'yasser', arName: 'ياسر الدوسري', enName: 'Yasser Al-Dossary', baseUrl: 'https://everyayah.com/data/Yasser_Ad-Dussary_128kbps'),
 ];
+
+
+class AppAudioController extends ChangeNotifier {
+  AppAudioController() {
+    _indexSubscription = player.currentIndexStream.listen((index) {
+      if (activeSurahNumber == null || index == null) return;
+      playbackController.setAyah(activeSurahNumber!, startAyah + index, playing: player.playing);
+      notifyListeners();
+    });
+    _playingSubscription = player.playingStream.listen((playing) {
+      final surah = activeSurahNumber;
+      final ayah = playbackController.currentAyah;
+      if (surah != null && ayah != null) {
+        playbackController.setAyah(surah, ayah, playing: playing);
+      }
+      notifyListeners();
+    });
+  }
+
+  final AudioPlayer player = AudioPlayer();
+  StreamSubscription<int?>? _indexSubscription;
+  StreamSubscription<bool>? _playingSubscription;
+  int reciterIndex = 0;
+  int? activeSurahNumber;
+  int startAyah = 1;
+  bool loading = false;
+  String status = '';
+
+  ReciterSource get reciter => reciters[reciterIndex];
+  bool get playing => player.playing;
+
+  void setReciter(int index) {
+    reciterIndex = index.clamp(0, reciters.length - 1).toInt();
+    notifyListeners();
+  }
+
+  Future<void> playSurah(QuranSurah surah, {int firstAyah = 1, String lang = 'ar'}) async {
+    loading = true;
+    status = lang == 'ar' ? 'جاري تجهيز تلاوة السورة داخل صفحة المصحف...' : 'Preparing recitation in the Mushaf page...';
+    notifyListeners();
+    try {
+      await player.stop();
+      activeSurahNumber = surah.number;
+      startAyah = firstAyah.clamp(1, surah.ayahCount).toInt();
+      playbackController.start(surah: surah.number, ayah: startAyah);
+      final urls = surah.ayahs.where((a) => a.number >= startAyah).map((a) => reciter.urlFor(surah.number, a.number)).toList(growable: false);
+      await player.setAudioSources([for (final url in urls) AudioSource.uri(Uri.parse(url))]);
+      await player.play();
+      status = lang == 'ar'
+          ? 'التلاوة تعمل الآن داخل صفحة المصحف، وسيظهر نور متحرك مع الآيات حتى عند الانتقال بين صفحات التطبيق.'
+          : 'Recitation is playing from the Mushaf page; the glow follows the ayahs while navigating the app.';
+    } catch (_) {
+      status = lang == 'ar' ? 'تعذر تشغيل الصوت. جرّب قارئًا آخر أو تأكد من الاتصال بالإنترنت.' : 'Audio could not be played. Try another reciter or check the internet connection.';
+      playbackController.stop();
+    } finally {
+      loading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> stop() async {
+    await player.stop();
+    playbackController.stop();
+    status = '';
+    notifyListeners();
+  }
+}
+
+late final AppAudioController appAudioController;
+
+class MushafAudioPanel extends StatefulWidget {
+  const MushafAudioPanel({super.key, required this.settings, required this.surah});
+  final SettingsController settings;
+  final QuranSurah surah;
+
+  @override
+  State<MushafAudioPanel> createState() => _MushafAudioPanelState();
+}
+
+class _MushafAudioPanelState extends State<MushafAudioPanel> {
+  int reciterIndex = appAudioController.reciterIndex;
+
+  @override
+  Widget build(BuildContext context) {
+    final lang = widget.settings.language;
+    return AnimatedBuilder(
+      animation: appAudioController,
+      builder: (context, _) {
+        final active = appAudioController.activeSurahNumber == widget.surah.number && playbackController.isPlaying;
+        return Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surface.withOpacity(.62),
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(color: Theme.of(context).colorScheme.outlineVariant.withOpacity(.6)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(children: [
+                Icon(Icons.graphic_eq_rounded, color: Theme.of(context).colorScheme.primary),
+                const SizedBox(width: 8),
+                Expanded(child: Text(t('mushafAudio', lang), style: const TextStyle(fontWeight: FontWeight.w900))),
+                if (active) Chip(avatar: const Icon(Icons.auto_awesome_rounded, size: 18), label: Text('${t('playing', lang)} ${playbackController.currentAyah ?? ''}')),
+              ]),
+              const SizedBox(height: 10),
+              Wrap(spacing: 10, runSpacing: 10, crossAxisAlignment: WrapCrossAlignment.center, children: [
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 420, minWidth: 220),
+                  child: DropdownButtonFormField<int>(
+                    value: reciterIndex,
+                    decoration: InputDecoration(labelText: t('reader', lang), prefixIcon: const Icon(Icons.record_voice_over_rounded)),
+                    items: [
+                      for (var i = 0; i < reciters.length; i++)
+                        DropdownMenuItem(value: i, child: Text(lang == 'ar' ? reciters[i].arName : reciters[i].enName, overflow: TextOverflow.ellipsis)),
+                    ],
+                    onChanged: (v) {
+                      if (v == null) return;
+                      setState(() => reciterIndex = v);
+                      appAudioController.setReciter(v);
+                    },
+                  ),
+                ),
+                FilledButton.icon(
+                  onPressed: appAudioController.loading ? null : () => appAudioController.playSurah(widget.surah, lang: lang),
+                  icon: appAudioController.loading ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(Icons.play_arrow_rounded),
+                  label: Text(t('playSurahHere', lang)),
+                ),
+                OutlinedButton.icon(
+                  onPressed: appAudioController.playing ? appAudioController.stop : null,
+                  icon: const Icon(Icons.stop_circle_rounded),
+                  label: Text(t('stop', lang)),
+                ),
+              ]),
+              if (appAudioController.status.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Text(appAudioController.status, style: TextStyle(height: 1.45, fontWeight: FontWeight.w700, color: Theme.of(context).colorScheme.onSurfaceVariant)),
+              ],
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
 
 class AudioScreen extends StatefulWidget {
   const AudioScreen({super.key, required this.settings, required this.surahs});
@@ -1339,6 +1494,75 @@ class RuleLearningBlocks extends StatelessWidget {
       : 'Ask yourself: What caused the rule? Which letter matters? Did I keep the proper timing? Did I avoid exaggeration? Clear answers mean you can move to new examples.';
 }
 
+
+class AdvancedPracticeBlocks extends StatelessWidget {
+  const AdvancedPracticeBlocks({super.key, required this.rule, required this.lang});
+  final TajweedRule rule;
+  final String lang;
+
+  @override
+  Widget build(BuildContext context) {
+    final drills = lang == 'ar'
+        ? [
+            'استخرج من المثال موضع الحكم فقط، ثم اقرأ ما قبله وما بعده حتى لا ينفصل الحكم عن سياق التلاوة.',
+            'كرّر الموضع ثلاث مرات: مرة ببطء شديد، مرة بسرعة متوسطة، ومرة بسرعة طبيعية مع المحافظة على المخرج والصفة.',
+            'قارن بين الحكم الحالي وحكم قريب منه حتى تعرف الفرق العملي، مثل الفرق بين الإظهار والإخفاء أو بين المد الطبيعي والمد المتصل.',
+            'اكتب سبب الحكم بكلمة واحدة: نون، تنوين، ميم، مد، لام، راء، وقف. ثم اذكر الحرف المؤثر إن وجد.',
+            'استمع إلى قارئ معلم، ثم أوقف الصوت عند الموضع وكرره بصوتك حتى يثبت في اللسان.'
+          ]
+        : [
+            'Extract only the rule place from the example, then read before and after it so the rule stays in context.',
+            'Repeat the place three times: very slowly, medium speed, then natural speed while preserving articulation.',
+            'Compare this rule with a similar one, such as Izhar vs Ikhfa or normal Madd vs connected Madd.',
+            'Write the cause in one word: noon, tanween, meem, madd, lam, raa, or stopping. Then name the affecting letter if any.',
+            'Listen to a teacher reciter, pause at the place, then repeat it aloud until it becomes natural.'
+          ];
+    final checks = lang == 'ar'
+        ? [
+            'هل عرفت سبب الحكم قبل القراءة؟',
+            'هل بقيت الكلمة متصلة دون تكسير أو مبالغة؟',
+            'هل خرج الحرف من مخرجه الصحيح؟',
+            'هل ضبطت زمن الغنة أو المد دون زيادة أو نقص؟',
+            'هل تستطيع شرح الحكم لشخص آخر بجملة قصيرة؟'
+          ]
+        : [
+            'Did you identify the cause before reciting?',
+            'Did the word remain connected without exaggeration?',
+            'Did the letter come from the correct articulation point?',
+            'Did you keep the correct duration of ghunnah or madd?',
+            'Can you explain the rule to someone else in one sentence?'
+          ];
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      SectionTitle(t('advancedDrills', lang)),
+      Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: rule.color.withOpacity(.08),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: rule.color.withOpacity(.20)),
+        ),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          for (final d in drills) BulletText(d),
+        ]),
+      ),
+      SectionTitle(t('reviewChecklist', lang)),
+      Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(.45),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Theme.of(context).colorScheme.outlineVariant.withOpacity(.45)),
+        ),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          for (final c in checks) BulletText(c),
+        ]),
+      ),
+    ]);
+  }
+}
+
 class RuleChip extends StatelessWidget {
   const RuleChip({super.key, required this.rule, required this.lang});
   final TajweedRule rule;
@@ -1419,6 +1643,7 @@ class RuleDetailPage extends StatelessWidget {
           Text(rule.deep.tr(lang), style: Theme.of(context).textTheme.bodyLarge?.copyWith(height: 1.8)),
           const SizedBox(height: 14),
           RuleLearningBlocks(rule: rule, lang: lang),
+          AdvancedPracticeBlocks(rule: rule, lang: lang),
           SectionTitle(t('examples', lang)),
           for (final e in rule.examples) QuranExample(e),
           SectionTitle(t('commonMistakes', lang)),
@@ -1579,7 +1804,7 @@ class LearningDayPage extends StatelessWidget {
           Text(day.body.tr(lang), style: const TextStyle(height: 1.7)),
           SectionTitle(t('examples', lang)),
           for (final e in day.examples) QuranExample(e),
-          SectionTitle('المهام / Tasks'),
+          SectionTitle(settings.language == 'ar' ? 'المهام العملية' : 'Practical tasks'),
           for (final task in day.tasks) BulletText(task.tr(lang)),
           SectionTitle(t('questions', lang)),
           for (final q in day.questions) QuestionPreview(question: q, lang: lang),
@@ -1651,7 +1876,7 @@ List<QuizQuestion> buildExtraExamQuestions(String examId) {
         const LocalText({'ar': 'صفات الحروف فقط', 'en': 'Letter attributes only'}),
       ],
       correctIndex: 0,
-      explanation: LocalText({'ar': 'الحكم مرتبط بباب ${r.category}. راجع تعريف الحكم وأسبابه وأمثلة تطبيقه.', 'en': 'This rule is under ${r.category}. Review its definition, causes and examples.'}),
+      explanation: LocalText({'ar': 'الحكم مرتبط بباب ${r.category}. راجع تعريف الحكم وأسبابه وأمثلة تطبيقه، ثم ابحث عنه داخل المصحف الملون.', 'en': 'This rule is under ${r.category}. Review its definition, causes and examples, then locate it in the colored Mushaf.'}),
     ));
     pool.add(QuizQuestion(
       id: 'auto_${examId}_${r.id}_${counter++}',
@@ -1664,9 +1889,31 @@ List<QuizQuestion> buildExtraExamQuestions(String examId) {
       correctIndex: 0,
       explanation: const LocalText({'ar': 'التجويد مهارة أداء، لذلك لا يكفي معرفة الاسم أو اللون؛ لا بد من السبب والتطبيق والمراجعة.', 'en': 'Tajweed is a performance skill; names and colors are not enough without cause, practice and review.'}),
     ));
+    pool.add(QuizQuestion(
+      id: 'auto_${examId}_${r.id}_${counter++}',
+      question: LocalText({'ar': "عند الخطأ في حكم ${r.title.tr('ar')} ماذا تفعل أولًا؟", 'en': "When you miss ${r.title.tr('en')}, what should you do first?"}),
+      options: const [
+        LocalText({'ar': 'أرجع إلى سبب الحكم ثم أقرأ المثال ببطء', 'en': 'Return to the rule cause, then read the example slowly'}),
+        LocalText({'ar': 'أغيّر لون الحكم فقط', 'en': 'Only change the color'}),
+        LocalText({'ar': 'أتجاوز الخطأ دون مراجعة', 'en': 'Skip the mistake without review'}),
+      ],
+      correctIndex: 0,
+      explanation: LocalText({'ar': 'تصحيح الخطأ يبدأ من معرفة السبب ثم التطبيق البطيء، وبعدها القراءة الطبيعية. هذا هو مسار التدريب الصحيح لحكم ${r.title.tr('ar')}.', 'en': 'Correction starts with identifying the cause, slow practice, then natural recitation.'}),
+    ));
+    pool.add(QuizQuestion(
+      id: 'auto_${examId}_${r.id}_${counter++}',
+      question: LocalText({'ar': "ما الهدف من ظهور لون حكم ${r.title.tr('ar')} داخل المصحف؟", 'en': "What is the purpose of coloring ${r.title.tr('en')} in the Mushaf?"}),
+      options: const [
+        LocalText({'ar': 'تنبيه المتعلم إلى موضع الأداء الصحيح لا مجرد الزينة', 'en': 'To guide the learner to correct performance, not decoration'}),
+        LocalText({'ar': 'تغيير معنى الآية', 'en': 'To change the meaning of the verse'}),
+        LocalText({'ar': 'إلغاء الحاجة إلى التعلم والسماع', 'en': 'To remove the need for learning and listening'}),
+      ],
+      correctIndex: 0,
+      explanation: const LocalText({'ar': 'الألوان وسيلة تعليمية تساعد على الانتباه، لكن الأصل هو التلقي الصحيح والتكرار والمراجعة.', 'en': 'Colors are educational aids; proper learning still needs listening, practice and review.'}),
+    ));
   }
   pool.shuffle(Random(examId.hashCode));
-  return pool.take(60).toList(growable: false);
+  return pool.take(140).toList(growable: false);
 }
 
 class ExamRunnerPage extends StatefulWidget {
@@ -1754,7 +2001,7 @@ class _ExamRunnerPageState extends State<ExamRunnerPage> {
             await ProgressService().saveExamScore(widget.exam.id, score);
           },
           icon: Icon(finished ? Icons.arrow_back_rounded : Icons.fact_check_rounded),
-          label: Text(finished ? 'رجوع' : t('finishExam', lang)),
+          label: Text(finished ? (lang == 'ar' ? 'رجوع' : 'Back') : t('finishExam', lang)),
         ),
       ]),
     );
@@ -1784,9 +2031,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           FilledButton.icon(onPressed: () async {
             final ok = await NotificationService().requestPermission();
             setState(() => permission = ok);
-            if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(ok ? 'تم تفعيل الصلاحية' : 'لم يتم منح الصلاحية')));
+            if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(ok ? (lang == 'ar' ? 'تم تفعيل الصلاحية' : 'Permission enabled') : (lang == 'ar' ? 'لم يتم منح الصلاحية' : 'Permission was not granted'))));
           }, icon: const Icon(Icons.lock_open_rounded), label: Text('Permission')),
-          OutlinedButton.icon(onPressed: () async => NotificationService().showTest(t('appTitle', lang), 'موعد ورد التجويد اليومي'), icon: const Icon(Icons.notifications_active_rounded), label: Text(t('testNotification', lang))),
+          OutlinedButton.icon(onPressed: () async => NotificationService().showTest(t('appTitle', lang), lang == 'ar' ? 'موعد ورد التجويد اليومي' : 'Daily Tajweed practice time'), icon: const Icon(Icons.notifications_active_rounded), label: Text(t('testNotification', lang))),
           OutlinedButton.icon(onPressed: () async {
             final picked = await showTimePicker(context: context, initialTime: time);
             if (picked != null) setState(() => time = picked);

@@ -7,12 +7,14 @@ class SettingsController extends ChangeNotifier {
   String fontFamily = 'Arial';
   double quranFontSize = 30;
   bool showColorGuide = true;
+  String mushafBackgroundId = 'theme';
 
   static const _languageKey = 'language';
   static const _themeKey = 'theme';
   static const _fontKey = 'font';
   static const _fontSizeKey = 'quran_font_size';
   static const _guideKey = 'show_color_guide';
+  static const _mushafBackgroundKey = 'mushaf_background';
 
   double get uiTextScale => (0.84 + ((quranFontSize - 20) / 28) * 0.34).clamp(0.9, 1.22);
 
@@ -25,6 +27,8 @@ class SettingsController extends ChangeNotifier {
     if (!fontFamilies.contains(fontFamily)) fontFamily = 'Arial';
     quranFontSize = (prefs.getDouble(_fontSizeKey) ?? 30).clamp(20, 56).toDouble();
     showColorGuide = prefs.getBool(_guideKey) ?? true;
+    mushafBackgroundId = prefs.getString(_mushafBackgroundKey) ?? 'theme';
+    if (!mushafBackgroundNames.containsKey(mushafBackgroundId)) mushafBackgroundId = 'theme';
     notifyListeners();
   }
 
@@ -69,7 +73,14 @@ class SettingsController extends ChangeNotifier {
     notifyListeners();
     (await SharedPreferences.getInstance()).setBool(_guideKey, value);
   }
+
+  Future<void> setMushafBackground(String value) async {
+    mushafBackgroundId = mushafBackgroundNames.containsKey(value) ? value : 'theme';
+    notifyListeners();
+    (await SharedPreferences.getInstance()).setString(_mushafBackgroundKey, mushafBackgroundId);
+  }
 }
+
 
 const fontFamilies = [
   'Arial',
@@ -106,16 +117,34 @@ const themeNames = {
   'sky': {'ar': 'أزرق سماوي', 'en': 'Sky Blue', 'fr': 'Bleu ciel', 'tr': 'Gök mavisi', 'es': 'Azul cielo', 'de': 'Himmelblau'},
 };
 
-Color quranPaperColor(String id, Brightness brightness) {
-  switch (id) {
+const mushafBackgroundNames = {
+  'theme': {'ar': 'حسب الثيم', 'en': 'Theme default', 'fr': 'Thème', 'tr': 'Tema varsayılanı', 'es': 'Según tema', 'de': 'Nach Design'},
+  'cream': {'ar': 'كريمي مصحفي', 'en': 'Cream Mushaf', 'fr': 'Crème', 'tr': 'Krem', 'es': 'Crema', 'de': 'Creme'},
+  'white': {'ar': 'أبيض صافي', 'en': 'Pure white', 'fr': 'Blanc', 'tr': 'Beyaz', 'es': 'Blanco', 'de': 'Weiß'},
+  'goldPaper': {'ar': 'ورق ذهبي هادئ', 'en': 'Soft gold paper', 'fr': 'Doré doux', 'tr': 'Yumuşak altın', 'es': 'Dorado suave', 'de': 'Sanftes Gold'},
+  'greenPaper': {'ar': 'أخضر فاتح هادئ', 'en': 'Soft green', 'fr': 'Vert doux', 'tr': 'Yumuşak yeşil', 'es': 'Verde suave', 'de': 'Sanftes Grün'},
+  'bluePaper': {'ar': 'أزرق سماوي هادئ', 'en': 'Soft sky blue', 'fr': 'Bleu doux', 'tr': 'Açık gök mavisi', 'es': 'Azul suave', 'de': 'Sanftes Blau'},
+  'darkPaper': {'ar': 'ليلي مريح', 'en': 'Comfort dark', 'fr': 'Sombre confortable', 'tr': 'Rahat koyu', 'es': 'Oscuro cómodo', 'de': 'Komfort dunkel'},
+};
+
+Color quranPaperColor(String themeId, Brightness brightness, [String backgroundId = 'theme']) {
+  final selected = backgroundId == 'theme' ? themeId : backgroundId;
+  switch (selected) {
     case 'dark':
-      return const Color(0xFF111827);
+    case 'darkPaper':
+      return const Color(0xFF0F172A);
     case 'gold':
-      return const Color(0xFFFFF8E1);
+    case 'goldPaper':
+      return const Color(0xFFFFF7D6);
     case 'mint':
+    case 'greenPaper':
       return const Color(0xFFF0FDF4);
     case 'sky':
+    case 'bluePaper':
       return const Color(0xFFEFF8FF);
+    case 'white':
+      return const Color(0xFFFFFFFF);
+    case 'cream':
     case 'light':
     default:
       return const Color(0xFFFBF7EF);

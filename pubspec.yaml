@@ -1,7 +1,7 @@
 name: tajweed_master_pro
-description: Tajweed Master Pro V15 Premium Mushaf RTL and Exams - Flutter Quran Tajweed app with direct glyph coloring, clean Mushaf layout, Firebase-ready architecture, admin portal blueprint, certificates, gamification, AI recitation pipeline, offline audio strategy, and cloud progress design.
+description: Tajweed Master Pro V16 Ultra Professional RTL Mushaf - Flutter Quran Tajweed app with direct glyph coloring, clean Mushaf layout, Firebase-ready architecture, admin portal blueprint, certificates, gamification, AI recitation pipeline, offline audio strategy, and cloud progress design.
 publish_to: 'none'
-version: 1.5.0+15
+version: 1.6.0+16
 
 environment:
   sdk: '>=3.8.0 <4.0.0'
