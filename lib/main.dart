@@ -870,7 +870,7 @@ class ProfessionalTajweedText extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final painter = _buildPainter(style.copyWith(color: Theme.of(context).colorScheme.onSurface));
-    painter.layout(maxWidth: maxWidth);
+    painter.layout(minWidth: maxWidth, maxWidth: maxWidth);
     return SizedBox(
       width: maxWidth,
       height: painter.height + 4,
