@@ -8,6 +8,9 @@ class SettingsController extends ChangeNotifier {
   double quranFontSize = 30;
   bool showColorGuide = true;
   String mushafBackgroundId = 'theme';
+  double buttonScale = 1.0;
+  bool showAds = true;
+  String accentHex = '';
 
   static const _languageKey = 'language';
   static const _themeKey = 'theme';
@@ -15,6 +18,9 @@ class SettingsController extends ChangeNotifier {
   static const _fontSizeKey = 'quran_font_size';
   static const _guideKey = 'show_color_guide';
   static const _mushafBackgroundKey = 'mushaf_background';
+  static const _buttonScaleKey = 'button_scale';
+  static const _showAdsKey = 'show_ads';
+  static const _accentHexKey = 'accent_hex';
 
   double get uiTextScale => (0.84 + ((quranFontSize - 20) / 28) * 0.34).clamp(0.9, 1.22);
 
@@ -29,6 +35,9 @@ class SettingsController extends ChangeNotifier {
     showColorGuide = prefs.getBool(_guideKey) ?? true;
     mushafBackgroundId = prefs.getString(_mushafBackgroundKey) ?? 'theme';
     if (!mushafBackgroundNames.containsKey(mushafBackgroundId)) mushafBackgroundId = 'theme';
+    buttonScale = (prefs.getDouble(_buttonScaleKey) ?? 1.0).clamp(0.85, 1.35).toDouble();
+    showAds = prefs.getBool(_showAdsKey) ?? true;
+    accentHex = prefs.getString(_accentHexKey) ?? '';
     notifyListeners();
   }
 
@@ -79,6 +88,25 @@ class SettingsController extends ChangeNotifier {
     notifyListeners();
     (await SharedPreferences.getInstance()).setString(_mushafBackgroundKey, mushafBackgroundId);
   }
+
+  Future<void> setButtonScale(double value) async {
+    buttonScale = value.clamp(0.85, 1.35).toDouble();
+    notifyListeners();
+    (await SharedPreferences.getInstance()).setDouble(_buttonScaleKey, buttonScale);
+  }
+
+  Future<void> setShowAds(bool value) async {
+    showAds = value;
+    notifyListeners();
+    (await SharedPreferences.getInstance()).setBool(_showAdsKey, value);
+  }
+
+  Future<void> setAccentHex(String value) async {
+    accentHex = value.trim();
+    notifyListeners();
+    (await SharedPreferences.getInstance()).setString(_accentHexKey, accentHex);
+  }
+
 }
 
 
@@ -151,7 +179,15 @@ Color quranPaperColor(String themeId, Brightness brightness, [String backgroundI
   }
 }
 
-ThemeData buildTheme(String id, String fontFamily) {
+Color? parseAdminAccentColor(String hex) {
+  final value = hex.trim().replaceAll('#', '');
+  if (value.length != 6) return null;
+  final parsed = int.tryParse(value, radix: 16);
+  if (parsed == null) return null;
+  return Color(0xFF000000 | parsed);
+}
+
+ThemeData buildTheme(String id, String fontFamily, {String accentHex = '', double buttonScale = 1.0}) {
   final configs = <String, ({Color seed, Brightness brightness, Color surface})>{
     'light': (seed: const Color(0xFF0F766E), brightness: Brightness.light, surface: const Color(0xFFF7FAF7)),
     'dark': (seed: const Color(0xFF38BDF8), brightness: Brightness.dark, surface: const Color(0xFF0B1220)),
@@ -160,7 +196,8 @@ ThemeData buildTheme(String id, String fontFamily) {
     'sky': (seed: const Color(0xFF0284C7), brightness: Brightness.light, surface: const Color(0xFFEFF8FF)),
   };
   final c = configs[id] ?? configs['light']!;
-  final colorScheme = ColorScheme.fromSeed(seedColor: c.seed, brightness: c.brightness);
+  final adminSeed = parseAdminAccentColor(accentHex);
+  final colorScheme = ColorScheme.fromSeed(seedColor: adminSeed ?? c.seed, brightness: c.brightness);
   return ThemeData(
     useMaterial3: true,
     brightness: c.brightness,
@@ -186,8 +223,8 @@ ThemeData buildTheme(String id, String fontFamily) {
     ),
     filledButtonTheme: FilledButtonThemeData(
       style: FilledButton.styleFrom(
-        minimumSize: const Size(48, 48),
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+        minimumSize: Size(48 * buttonScale, 48 * buttonScale),
+        padding: EdgeInsets.symmetric(horizontal: 20 * buttonScale, vertical: 15 * buttonScale),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         elevation: 1.5,
         shadowColor: colorScheme.primary.withOpacity(.20),
@@ -196,8 +233,8 @@ ThemeData buildTheme(String id, String fontFamily) {
     ),
     outlinedButtonTheme: OutlinedButtonThemeData(
       style: OutlinedButton.styleFrom(
-        minimumSize: const Size(46, 46),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+        minimumSize: Size(46 * buttonScale, 46 * buttonScale),
+        padding: EdgeInsets.symmetric(horizontal: 16 * buttonScale, vertical: 13 * buttonScale),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
         side: BorderSide(color: colorScheme.outline.withOpacity(.45)),
         textStyle: const TextStyle(fontWeight: FontWeight.w800),

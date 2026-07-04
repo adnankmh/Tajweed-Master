@@ -129,6 +129,12 @@ const appStrings = <String, Map<String, String>>{
   'reviewChecklist': {'ar': 'قائمة مراجعة الأداء', 'en': 'Performance checklist', 'fr': 'Liste de révision', 'tr': 'Performans listesi', 'es': 'Lista de revisión', 'de': 'Leistungs-Checkliste'},
 
   'addQuestion': {'ar': 'إضافة سؤال', 'en': 'Add question', 'fr': 'Ajouter question', 'tr': 'Soru ekle', 'es': 'Añadir pregunta', 'de': 'Frage hinzufügen'},
+
+  'ads': {'ar': 'الإعلانات', 'en': 'Ads', 'fr': 'Publicités', 'tr': 'Reklamlar', 'es': 'Anuncios', 'de': 'Anzeigen'},
+  'adminDesign': {'ar': 'تحكم التصميم والأرباح', 'en': 'Design and monetization control', 'fr': 'Design et monétisation', 'tr': 'Tasarım ve gelir kontrolü', 'es': 'Diseño y monetización', 'de': 'Design und Monetarisierung'},
+  'buttonSize': {'ar': 'حجم الأزرار', 'en': 'Button size', 'fr': 'Taille des boutons', 'tr': 'Buton boyutu', 'es': 'Tamaño de botones', 'de': 'Schaltflächengröße'},
+  'accentColor': {'ar': 'لون رئيسي مخصص', 'en': 'Custom accent color', 'fr': 'Couleur principale', 'tr': 'Özel vurgu rengi', 'es': 'Color principal', 'de': 'Akzentfarbe'},
+  'adSlotReady': {'ar': 'مساحة إعلان جاهزة', 'en': 'Ad slot ready', 'fr': 'Emplacement publicitaire prêt', 'tr': 'Reklam alanı hazır', 'es': 'Espacio de anuncio listo', 'de': 'Anzeigenplatz bereit'},
 };
 
 String t(String key, String lang) => appStrings[key]?[lang] ?? appStrings[key]?['ar'] ?? key;

@@ -43,7 +43,7 @@ class TajweedApp extends StatelessWidget {
         return MaterialApp(
           debugShowCheckedModeBanner: false,
           title: t('appTitle', settings.language),
-          theme: buildTheme(settings.themeId, settings.fontFamily),
+          theme: buildTheme(settings.themeId, settings.fontFamily, accentHex: settings.accentHex, buttonScale: settings.buttonScale),
           locale: Locale(settings.language),
           supportedLocales: supportedLanguages.map(Locale.new),
           localizationsDelegates: const [
@@ -220,7 +220,9 @@ class _HomeShellState extends State<HomeShell> {
           final content = Column(
             children: [
               SettingsBar(settings: widget.settings, onOpenSettings: () => goPage(7)),
+              if (widget.settings.showAds) AdSlotBanner(settings: widget.settings, placement: 'top'),
               Expanded(child: IndexedStack(index: page, children: children)),
+              if (widget.settings.showAds && page != 0) AdSlotBanner(settings: widget.settings, placement: 'bottom'),
             ],
           );
           if (!isWide) return content;
@@ -282,6 +284,45 @@ class _HomeShellState extends State<HomeShell> {
               onPressed: () => setState(() => navVisible = true),
               child: const Icon(Icons.menu_rounded),
             ),
+    );
+  }
+}
+
+
+class AdSlotBanner extends StatelessWidget {
+  const AdSlotBanner({super.key, required this.settings, required this.placement});
+  final SettingsController settings;
+  final String placement;
+
+  @override
+  Widget build(BuildContext context) {
+    final lang = settings.language;
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      decoration: BoxDecoration(
+        color: scheme.secondaryContainer.withOpacity(.45),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: scheme.outlineVariant.withOpacity(.45)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.campaign_rounded, size: 18, color: scheme.onSecondaryContainer),
+          const SizedBox(width: 8),
+          Flexible(
+            child: Text(
+              lang == 'ar'
+                  ? 'مساحة إعلان جاهزة — يتم تفعيل الربح بعد إضافة AdMob/AdSense IDs من مرحلة النشر.'
+                  : 'Ad slot ready — monetization activates after adding AdMob/AdSense IDs in production.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: scheme.onSecondaryContainer, fontWeight: FontWeight.w800, fontSize: 12.5),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -1364,6 +1405,34 @@ class _AdminScreenState extends State<AdminScreen> {
         Row(children: [Icon(Icons.admin_panel_settings_rounded, color: Theme.of(context).colorScheme.primary), const SizedBox(width: 10), Text(t('adminPanel', lang), style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900))]),
         const SizedBox(height: 8),
         Text(lang == 'ar' ? 'هذه لوحة إدارة محلية آمنة للنسخة الحالية. يمكن للمدير إضافة أسئلة وملاحظات وشروحات محلية تظهر في الامتحانات/لوحة الإدارة. للنشر التجاري الاحترافي يُفضّل ربطها لاحقًا بقاعدة بيانات وصلاحيات سيرفر.' : 'Local admin panel for this version. Add local questions and notes. A real backend is recommended for commercial publishing.', style: const TextStyle(height: 1.6, fontWeight: FontWeight.w600)),
+      ]))),
+
+      Card(child: Padding(padding: const EdgeInsets.all(20), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [Icon(Icons.design_services_rounded, color: Theme.of(context).colorScheme.primary), const SizedBox(width: 10), Text(t('adminDesign', lang), style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900))]),
+        const SizedBox(height: 8),
+        Text(lang == 'ar' ? 'هذه الأدوات تجعل المدير يتحكم مباشرة في الثيم، خلفية المصحف، نوع الخط، حجم الخط، حجم الأزرار، ومساحات الإعلانات. التغييرات تحفظ محليًا وتظهر فورًا في كل التطبيق.' : 'Admin controls for theme, Mushaf background, font, font size, button size, and ad slots. Changes are saved locally and applied instantly.', style: const TextStyle(height: 1.6, fontWeight: FontWeight.w600)),
+        SectionTitle(t('theme', lang)),
+        Wrap(spacing: 8, runSpacing: 8, children: [for (final item in themeNames.entries) ChoiceChip(label: Text(item.value[lang] ?? item.value['ar']!), selected: widget.settings.themeId == item.key, onSelected: (_) => widget.settings.setThemeId(item.key))]),
+        SectionTitle(t('mushafBackground', lang)),
+        Wrap(spacing: 8, runSpacing: 8, children: [for (final item in mushafBackgroundNames.entries) ChoiceChip(label: Text(item.value[lang] ?? item.value['ar']!), selected: widget.settings.mushafBackgroundId == item.key, onSelected: (_) => widget.settings.setMushafBackground(item.key))]),
+        SectionTitle(t('font', lang)),
+        Wrap(spacing: 8, runSpacing: 8, children: [for (final font in fontFamilies) ChoiceChip(label: Text(font, style: TextStyle(fontFamily: font)), selected: widget.settings.fontFamily == font, onSelected: (_) => widget.settings.setFontFamily(font))]),
+        SectionTitle(t('fontSize', lang)),
+        Slider(value: widget.settings.quranFontSize, min: 20, max: 56, divisions: 18, label: widget.settings.quranFontSize.toStringAsFixed(0), onChanged: widget.settings.setFontSize),
+        SectionTitle(t('buttonSize', lang)),
+        Slider(value: widget.settings.buttonScale, min: .85, max: 1.35, divisions: 10, label: widget.settings.buttonScale.toStringAsFixed(2), onChanged: widget.settings.setButtonScale),
+        SectionTitle(t('accentColor', lang)),
+        Wrap(spacing: 8, runSpacing: 8, children: [
+          for (final entry in const {'':'Default', '#0F766E':'Emerald', '#D97706':'Gold', '#0284C7':'Sky', '#7C3AED':'Royal', '#DC2626':'Red'}.entries)
+            ChoiceChip(label: Text(entry.value), selected: widget.settings.accentHex == entry.key, onSelected: (_) => widget.settings.setAccentHex(entry.key)),
+        ]),
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          value: widget.settings.showAds,
+          onChanged: widget.settings.setShowAds,
+          title: Text(t('ads', lang), style: const TextStyle(fontWeight: FontWeight.w900)),
+          subtitle: Text(lang == 'ar' ? 'إظهار/إخفاء مساحات الإعلانات الجاهزة. الربح الحقيقي يحتاج AdMob/AdSense IDs.' : 'Show/hide prepared ad slots. Real monetization needs AdMob/AdSense IDs.'),
+        ),
       ]))),
       Card(child: Padding(padding: const EdgeInsets.all(20), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text(t('addQuestion', lang), style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900)),
